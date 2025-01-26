@@ -103,7 +103,7 @@ pip install -r requirements.txt
 
    ```bash
    git clone git@github.com:CL-BZH/Deep-Kalman-Filters.git
-   cd deep-kalman-filters
+   cd Deep-Kalman-Filters
    ```
 
 2. Install dependencies:
