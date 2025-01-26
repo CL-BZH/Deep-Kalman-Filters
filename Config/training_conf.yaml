@@ -1,0 +1,13 @@
+PREDICTION_TRAINING:
+  num_epochs: 120
+  learning_rate: 0.001
+  train_batch_size: 32
+  val_batch_size: 16
+  pred_batch_size: 32
+
+SMOOTHER_TRAINING:
+  num_epochs: 50
+  learning_rate: 0.001
+  train_batch_size: 32
+  val_batch_size: 16
+  pred_batch_size: 32

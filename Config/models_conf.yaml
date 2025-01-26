@@ -1,0 +1,109 @@
+aliases:
+  DKF: &dkf_alias
+    x_dim: 3
+    z_dim: 16
+    activation: "tanh"
+    q_b_rnn_hidden_size: 64
+    q_b_rnn_num_layers: 1
+    decoder_layers_dim: [64, 32]
+    dropout_p: 0.0
+    device: "cpu"
+    learnable_init_z: true
+    combiner_type: "linear"
+    combiner_layers_dim: [64]
+    combiner_alpha_init: 0.1
+    combiner_alpha: 0.5
+    combiner_learnable_alpha: true
+    combiner_output_dim: 64
+    latent_transition_layers_dim: [64]
+    encoder_layers_dim: [64]
+
+  AR_DKF: &ar_dkf_alias
+    x_dim: 3
+    z_dim: 16
+    activation: "tanh"
+    pz_f_rnn_hidden_size: 64
+    pz_f_rnn_num_layers: 1
+    q_b_rnn_hidden_size: 64
+    q_b_rnn_num_layers: 1
+    decoder_layers_dim: [64, 32]
+    dropout_p: 0.0
+    device: "cpu"
+    learnable_init_z: true
+    learnable_init_x: false
+    combiner_type: "linear"
+    combiner_layers_dim: [64]
+    combiner_alpha_init: 0.1
+    combiner_alpha: 0.5
+    combiner_learnable_alpha: true
+    combiner_output_dim: 64
+    latent_transition_layers_dim: [64]
+    encoder_layers_dim: [64]
+
+  FAR_DKF: &far_dkf_alias
+    x_dim: 3
+    z_dim: 16
+    activation: "tanh"
+    pz_f_rnn_hidden_size: 64
+    pz_f_rnn_num_layers: 1
+    q_b_rnn_hidden_size: 64
+    q_b_rnn_num_layers: 1
+    q_f_rnn_hidden_size: 64
+    q_f_rnn_num_layers: 1
+    decoder_layers_dim: [64, 32]
+    dropout_p: 0.0
+    device: "cpu"
+    learnable_init_z: true
+    learnable_init_x: false
+    combiner_type: "linear"
+    combiner_layers_dim: [64]
+    combiner_alpha_init: [0.1, 0.1]
+    combiner_alpha: [0.5, 0.5]
+    combiner_learnable_alpha: [true, true]
+    combiner_output_dim: 64
+    latent_transition_layers_dim: [64]
+    encoder_layers_dim: [64]
+
+  BAR_DKF: &bar_dkf_alias
+    x_dim: 3
+    z_dim: 16
+    activation: "tanh"
+    pz_f_rnn_hidden_size: 64
+    pz_f_rnn_num_layers: 1
+    q_b_rnn_hidden_size: 64
+    q_b_rnn_num_layers: 1
+    decoder_layers_dim: [64, 32]
+    dropout_p: 0.0
+    device: "cpu"
+    learnable_init_z: true
+    learnable_init_x: false
+    combiner_type: "linear"
+    combiner_layers_dim: [64]
+    combiner_alpha_init: 0.1
+    combiner_alpha: 0.5
+    combiner_learnable_alpha: true
+    combiner_output_dim: 64
+    latent_transition_layers_dim: [64]
+    encoder_layers_dim: [64]
+
+models:
+  DKF_1: *dkf_alias
+  AR_DKF_1: *ar_dkf_alias
+  FAR_DKF_1: *far_dkf_alias
+  BAR_DKF_1: *bar_dkf_alias
+
+  DKF_2:
+    <<: *dkf_alias
+    combiner_type: "mlp"
+
+  AR_DKF_2:
+    <<: *ar_dkf_alias
+    combiner_type: "mlp"
+
+  FAR_DKF_2:
+    <<: *far_dkf_alias
+    combiner_type: "mlp"
+
+  BAR_DKF_2:
+    <<: *bar_dkf_alias
+    combiner_type: "mlp"

@@ -1,0 +1,14 @@
+ipython==8.12.3
+matplotlib==3.10.0
+pandas==2.2.3
+pypesq==1.2.4
+scikit_learn==1.6.0
+scipy==1.14.1
+seaborn==0.13.2
+torch==2.1.0.post100
+torchinfo==1.8.0
+torchsummary==1.5.1
+torchviz==0.0.3
+tqdm==4.64.1
+tqdm==4.65.0
+tslearn==0.6.3
