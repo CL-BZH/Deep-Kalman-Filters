@@ -60,9 +60,9 @@ The project is organized as follows:
 │   └── dkf_models.py               # Core DKF models implementation
 ├── Notebooks/                      # Jupyter notebooks for interactive use
 │   ├── Tests/
+│   ├── elbo_expectations.ipynb     # Expectations in the DKF ELBO: hierarchical vs nested Monte Carlo
 │   ├── lorenz_attractor.ipynb      # Lorenz attractor data generation and visualization
-│   ├── main.ipynb                  # Notebook for training and evaluating models interactively
-│   └── nested_monte_carlo.ipynb    # Notebook for Nested Monte Carlo simulations
+│   └── main.ipynb                  # Notebook for training and evaluating models interactively
 ├── README.md                       # This file
 ├── Tests/                          # Directory for test runs and outputs
 ├── Utils/                          # Utility functions and tools
