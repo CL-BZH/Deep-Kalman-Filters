@@ -106,7 +106,11 @@ class DKF_Bidirectional_RNN(nn.Module):
         super(DKF_Bidirectional_RNN, self).__init__()
         
         # Bidirectional LSTM
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True,
+        # Inputs are (seq_len, batch_size, input_size), like every other RNN
+        # in this file, so batch_first must be False. (With batch_first=True
+        # the recurrence ran across the sequences of the minibatch instead
+        # of across time.)
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers,
                             bidirectional=True)
         
         # Combine type
@@ -150,10 +154,10 @@ class DKF_Bidirectional_RNN(nn.Module):
         Forward pass of the bidirectional LSTM.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, seq_len, input_size).
+            x (torch.Tensor): Input tensor of shape (seq_len, batch_size, input_size).
 
         Returns:
-            torch.Tensor: Output tensor of shape (batch_size, seq_len, output_size).
+            torch.Tensor: Output tensor of shape (seq_len, batch_size, output_size).
                           The output_size depends on the combine_type:
                           - "concat": 2 * hidden_size
                           - "sum", "weighted_sum", "concat_linear": hidden_size
@@ -269,6 +273,13 @@ class DKF_Combiner(ABC, nn.Module):
 
         Returns:
             torch.Tensor: Combined tensor of shape (batch_size, output_dim).
+        """
+        pass
+
+    def reset(self):
+        """
+        Called at the start of every sequence (before t = 1). Combiners that
+        treat the first time step differently override this method.
         """
         pass
 
@@ -434,13 +445,18 @@ class DKF_CombinerLinear(DKF_Combiner):
         # Concatenate all combined tensors
         combined = torch.cat(combined, dim=1)
 
-        # Update alpha to the running values after the first forward pass
+        # Use the running values for the following time steps of the sequence
+        # (reset() switches back to alpha_init at the start of every sequence)
         self.alpha = self.alpha_run
 
         # Map the combined tensor to the desired output dimension
         output = self.output_layer(combined)
         
         return output
+
+    def reset(self):
+        """Use alpha_init for the first time step of the next sequence."""
+        self.alpha = self.alpha_init
 
 
 class DKF_CombinerFactory(nn.Module):
@@ -512,6 +528,10 @@ class DKF_CombinerFactory(nn.Module):
             torch.Tensor: Combined tensor of shape (batch_size, output_dim).
         """
         return self.combiner(z_prev, rnn_hs)
+
+    def reset(self):
+        """Resets the per-sequence state of the combiner (see DKF_Combiner)."""
+        self.combiner.reset()
 
 #------------------------------------------------------------------------------
 
@@ -878,6 +898,7 @@ class DKF_Base(ABC, nn.Module):
         self.sampled_z = torch.zeros((seq_len, batch_size, self.z_dim)).to(self.device)
 
         sampled_z_t = z_0.squeeze(0)  # Remove the extra dimension from z_0
+        self.combiner.reset()  # use alpha_init again at t = 1
 
         # Work throught the whole sequence
         for t in range(0, seq_len):
@@ -925,6 +946,7 @@ class DKF_Base(ABC, nn.Module):
             self.sampled_z = torch.zeros((seq_len, batch_size, self.z_dim)).to(self.device)
             
             sampled_z_t = z_0.squeeze(0)  # Remove the extra dimension from z_0
+            self.combiner.reset()  # use alpha_init again at t = 1
             
             # Work throught the whole sequence
             for t in range(0, seq_len):
@@ -1093,6 +1115,7 @@ class AR_DKF(DKF_Base):
         self.sampled_z = torch.zeros((seq_len, batch_size, self.z_dim)).to(self.device)
 
         sampled_z_t = z_0.squeeze(0)  # Remove the extra dimension from z_0
+        self.combiner.reset()  # use alpha_init again at t = 1
 
         # Work throught the whole sequence
         for t in range(0, seq_len):
@@ -1138,6 +1161,7 @@ class AR_DKF(DKF_Base):
             self.sampled_z = torch.zeros((seq_len, batch_size, self.z_dim)).to(self.device)
             
             sampled_z_t = z_0.squeeze(0)  # Remove the extra dimension from z_0
+            self.combiner.reset()  # use alpha_init again at t = 1
             
             # Work throught the whole sequence
             for t in range(0, seq_len):
@@ -1276,6 +1300,7 @@ class FAR_DKF(DKF_Base):
         self.sampled_z = torch.zeros((seq_len, batch_size, self.z_dim)).to(self.device)
 
         sampled_z_t = z_0.squeeze(0)  # Remove the extra dimension from z_0
+        self.combiner.reset()  # use alpha_init again at t = 1
 
         # Work throught the whole sequence
         for t in range(0, seq_len):
@@ -1327,6 +1352,7 @@ class FAR_DKF(DKF_Base):
             self.sampled_z = torch.zeros((seq_len, batch_size, self.z_dim)).to(self.device)
             
             sampled_z_t = z_0.squeeze(0)  # Remove the extra dimension from z_0
+            self.combiner.reset()  # use alpha_init again at t = 1
             
             # Work throught the whole sequence
             for t in range(0, seq_len):
@@ -1467,6 +1493,7 @@ class BAR_DKF(DKF_Base):
         self.sampled_z = torch.zeros((seq_len, batch_size, self.z_dim)).to(self.device)
 
         sampled_z_t = z_0.squeeze(0)  # Remove the extra dimension from z_0
+        self.combiner.reset()  # use alpha_init again at t = 1
 
         # Work throught the whole sequence
         for t in range(0, seq_len):
@@ -1512,6 +1539,7 @@ class BAR_DKF(DKF_Base):
             self.sampled_z = torch.zeros((seq_len, batch_size, self.z_dim)).to(self.device)
             
             sampled_z_t = z_0.squeeze(0)  # Remove the extra dimension from z_0
+            self.combiner.reset()  # use alpha_init again at t = 1
             
             # Work throught the whole sequence
             for t in range(0, seq_len):
