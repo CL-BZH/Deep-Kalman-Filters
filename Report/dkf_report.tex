@@ -1,0 +1,144 @@
+\documentclass[a4paper]{report}
+
+\usepackage[top=2cm, bottom=2cm, left=1.5cm, right=1.5cm]{geometry}
+\geometry{a4paper}
+\usepackage[utf8]{inputenc}
+\DeclareUnicodeCharacter{2212}{\textendash}
+\usepackage[toc,page]{appendix}
+\usepackage{bm}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage[many]{tcolorbox}
+\usepackage[Glenn]{fncychap}
+\usepackage{diagbox}
+\usepackage{csquotes}
+\usepackage{placeins}
+\usepackage[numbers]{natbib}
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue,
+            citecolor=blue]{hyperref}
+\usepackage{bookmark}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+
+\definecolor{codegray}{gray}{0.9}
+\newcommand{\code}[1]{\colorbox{codegray}{\texttt{#1}}}
+\newcommand{\indep}{\perp\!\!\!\perp}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\E}{\mathbb{E}}
+
+% Remarks in the author's voice (kept from the original report)
+\newtcolorbox{story}[1][]{
+    width=\textwidth,
+    colback=magenta!10,
+    colframe=black!40,
+    colbacktitle=blue!30,
+    fonttitle=\bfseries,
+    left=1ex, right=1ex, top=2pt,
+    arc=0pt, outer arc=0pt,
+    leftrule=0pt, rightrule=0pt, toprule=0pt, bottomrule=0pt,
+    breakable, enhanced jigsaw,
+    title={#1}}
+
+% Plain-language explanation of a formula or a result
+\newtcolorbox{inwords}[1][In words]{
+    width=\textwidth,
+    colback=teal!6,
+    colframe=teal!55!black,
+    fonttitle=\bfseries,
+    left=1ex, right=1ex, top=2pt,
+    arc=2pt, boxrule=0.6pt,
+    breakable, enhanced jigsaw,
+    title={#1}}
+
+% Annexes: sections numbered I, II, ... (appendices are lettered A, B, ...)
+\newcommand{\annexes}{
+    \chapter*{Annex}
+    \addcontentsline{toc}{chapter}{Annex}
+    \setcounter{section}{0}
+    \setcounter{subsection}{0}
+    \renewcommand{\thesection}{\Roman{section}}
+    \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+}
+
+\makeatletter
+\def\@makechapterhead#1{%
+  {\parindent \z@ \raggedright \normalfont
+    \ifnum \c@secnumdepth >\m@ne
+        \huge\bfseries \@chapapp\space \thechapter
+        \par\nobreak
+        \vskip 20\p@
+    \fi
+    \interlinepenalty\@M
+    \Huge \bfseries #1\par\nobreak
+    \vskip 20\p@
+  }}
+\makeatother
+
+\begin{document}
+
+\fontsize{11pt}{13pt}\selectfont
+
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+    {\Huge \textbf{Deep Kalman Filters}} \\
+    \vspace{0.4cm}
+    \vspace{1cm}
+    {\Large Christophe Louargant} \\
+    \vspace{0.5cm}
+    {\LARGE \textbf{C}onservatoire \textbf{N}ational des \textbf{A}rts
+    et \textbf{M}étiers} \\
+    \vspace{0.5cm}
+    {\Large \textbf{Paris}}\\
+    \vspace{1.5cm}
+    {\Large RCP 217} \\
+    \vspace{0.6cm}
+    {\large December 2024} \\
+    \vspace{1cm}
+    \includegraphics[width=0.9\textwidth]{./Images/lorenz_attractor_color.png}
+    \vfill
+    \section*{License}
+    This work is licensed under the Creative Commons
+    Attribution 4.0 International License.
+\end{titlepage}
+
+\tableofcontents
+\listoffigures
+
+\newpage
+
+\input{introduction}
+\input{kalman_filter}
+\input{vae_overview}
+\input{deep_kalman_filters}
+\input{conclusion}
+
+\begin{appendices}
+\renewcommand{\thesection}{\Alph{section}}
+\input{appendix_backward_lstm}
+\pagebreak
+\input{appendix_elbo_derivation}
+\pagebreak
+\input{appendix_elbo_reconstruction}
+\pagebreak
+\input{appendix_elbo_regularization}
+\pagebreak
+\input{appendix_combiner_info}
+\pagebreak
+\input{appendix_results}
+\end{appendices}
+
+\annexes
+\input{annex_d_separation}
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\end{document}

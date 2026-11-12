@@ -1,0 +1,113 @@
+\section{Bayesian Networks: Paths and D-Separation}\label{seq:d_separation}
+
+This is a short overview. A complete treatment is given by Koller and
+Friedman \cite{koller2009probabilistic}.
+
+\subsection*{Bayesian networks}
+
+A Bayesian network is a directed acyclic graph (DAG) whose nodes are
+random variables, together with the factorisation
+\[
+    p(v_1, \dots, v_n) = \prod_{k=1}^n p(v_k \mid \mathrm{pa}(v_k)),
+\]
+where $\mathrm{pa}(v_k)$ are the parents of $v_k$. The graph encodes
+conditional independences, which d-separation lets us read directly from
+it.
+
+\subsection*{Paths and the three elementary connections}
+
+A \emph{path} between two nodes is a sequence of adjacent nodes,
+\textbf{regardless of the direction of the edges}. For example, in
+$A \leftarrow B \rightarrow C$ there is a path from $A$ to $C$ even
+though no arrow goes from $A$ to $C$. Each intermediate node of a path
+takes one of three roles, depending on the two edges that meet at it.
+
+\begin{enumerate}
+    \item \textbf{Chain} $A \rightarrow B \rightarrow C$. $A$ influences
+    $C$ through $B$.
+    \item \textbf{Fork} (common cause) $A \leftarrow B \rightarrow C$.
+    $A$ and $C$ are correlated because they share the cause $B$.
+    \item \textbf{Collider} (common effect) $A \rightarrow B \leftarrow
+    C$. $A$ and $C$ are independent causes of $B$.
+\end{enumerate}
+
+\subsection*{Blocked paths}
+
+Let $\mathcal{S}$ be the set of observed (conditioned-on) variables. A
+path is \textbf{blocked} by $\mathcal{S}$ if it contains at least one
+intermediate node $B$ such that
+\begin{itemize}
+    \item $B$ is a chain or fork node and $B \in \mathcal{S}$; or
+    \item $B$ is a collider and neither $B$ nor any of its descendants is
+    in $\mathcal{S}$.
+\end{itemize}
+Otherwise the path is \textbf{active}. Two sets of variables are
+\textbf{d-separated} by $\mathcal{S}$ if every path between them is
+blocked. If $\mathcal{X}$ and $\mathcal{Y}$ are d-separated by
+$\mathcal{S}$, then $\mathcal{X} \indep \mathcal{Y} \mid \mathcal{S}$ in
+every distribution that factorises according to the graph.
+
+\subsection*{The two mechanisms, with examples}
+
+\paragraph{Chains and forks: screening off.}
+Observing the middle node of a chain or a fork \emph{blocks} the path.
+
+\emph{Chain.} Let $A$ = \enquote{it rains}, $B$ = \enquote{the grass is
+wet}, $C$ = \enquote{someone slips on the grass}:
+$A \rightarrow B \rightarrow C$. Without information about the grass,
+knowing that it rains makes slipping more likely. But once we know
+whether the grass is wet, the rain tells us nothing more about slipping:
+all its influence goes through the wetness. Formally,
+$p(C \mid A, B) = p(C \mid B)$. The observed $B$ \emph{screens off} $C$
+from $A$.
+
+\emph{Fork.} Let $B$ = \enquote{the patient has the flu}, $A$ =
+\enquote{fever}, $C$ = \enquote{cough}: $A \leftarrow B \rightarrow C$.
+Fever and cough are correlated in the population, because both are
+symptoms of the flu. Among patients known to have the flu, observing a
+fever does not make a cough more likely: $A \indep C \mid B$.
+
+\paragraph{Colliders: explaining away.}
+A collider works the other way round: the path is blocked as long as the
+collider is \emph{unobserved}, and observing it (or one of its
+descendants) \emph{opens} the path.
+
+Let $A$ = \enquote{it rained}, $C$ = \enquote{the sprinkler was on},
+$B$ = \enquote{the grass is wet}: $A \rightarrow B \leftarrow C$. Rain
+and sprinkler are independent: $A \indep C$. But once we observe that the
+grass is wet, learning that it rained makes the sprinkler \emph{less}
+likely, because the rain already explains the wet grass. Observing the
+common effect makes its causes dependent. This phenomenon, and only this
+one, is called \textbf{explaining away}.
+
+\begin{inwords}
+Information flows through chains and forks unless the middle node is
+known. It flows through a collider only if the collider (or something it
+causes) is known. Two variables are conditionally independent when every
+route between them is cut by one of these rules.
+\end{inwords}
+
+\subsection*{Application to the DKF}
+
+In the graph of Figure~\ref{fig:dkf_model}, the latent states form a
+chain $\mathbf{z}_1 \rightarrow \mathbf{z}_2 \rightarrow \cdots$, each
+$\mathbf{z}_t$ has a child $\mathbf{x}_t$, and each input $\mathbf{u}_t$ is
+a parent of $\mathbf{z}_t$.
+\begin{itemize}
+    \item Given $\mathbf{z}_{t-1}$, every path from $\mathbf{x}_{t-1}$,
+    $\mathbf{z}_{t-2}$ or $\mathbf{u}_{t-1}$ to $\mathbf{z}_t$ passes
+    through $\mathbf{z}_{t-1}$ as a chain or fork node, and is blocked.
+    This gives the factorisation of the generative model and the
+    structure of the posterior (Sections~\ref{seq:generative_model} and
+    \ref{sec:posterior}).
+    \item The future observation $\mathbf{x}_{t+1}$ is \emph{not}
+    d-separated from $\mathbf{z}_t$ by $\mathbf{z}_{t-1}$: the path
+    $\mathbf{z}_t \rightarrow \mathbf{z}_{t+1} \rightarrow
+    \mathbf{x}_{t+1}$ is a chain whose middle node is unobserved. This is
+    why the inference network needs $\mathbf{x}_{t:T}$.
+    \item In the AR DKF, the added edge $\mathbf{x}_{t-1} \rightarrow
+    \mathbf{z}_t$ is a path with no intermediate node, which nothing can
+    block. This is why the AR DKF posterior depends on past observations
+    (Proposition~\ref{prop:ar_posterior}).
+\end{itemize}
+

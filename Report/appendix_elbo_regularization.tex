@@ -1,0 +1,127 @@
+\section{Detailed Mathematical Development of the Regularization Term}
+\label{sec:elbo_regularization}
+(Computation is done here without the control input term $\bm{u}$.)
+%
+\subsection*{Problem Setup}
+
+Given the following distributions:
+
+\begin{equation*}
+    p_{\theta_{\bm{z}}}(\bm{z}_t | \bm{z}_{t-1}) 
+    = 
+    \mathcal{N}(\bm{z}_t; 
+    \mu_{\theta_{\bm{z}}}(\bm{z}_{t-1}), 
+    \Sigma^2_{\theta_{\bm{z}}}(\bm{z}_{t-1}))
+    =
+    \mathcal{N}(\bm{z}_t; 
+    \mu_{\theta_{\bm{z}}}(\bm{z}_{t-1}), 
+    \text{diag}(\sigma^2_{\theta_{\bm{z}}}(\bm{z}_{t-1})))
+\end{equation*}
+
+and
+\begin{equation*}
+    q_{\phi}(\bm{z}_t | \bm{z}_{t-1}, \bm{x}_{t:T}) 
+    = 
+    \mathcal{N}(\bm{z}_t; \mu_{\phi}(\bm{z}_{t-1}, \bm{x}_{t:T}), 
+    \Sigma^2_{\phi}(\bm{z}_{t-1}, \bm{x}_{t:T}))
+    =
+    \mathcal{N}(\bm{z}_t; \mu_{\phi}(\bm{z}_{t-1}, \bm{x}_{t:T}), 
+    \text{diag}(\sigma^2_{\phi}(\bm{z}_{t-1}, \bm{x}_{t:T})))
+\end{equation*}
+
+We aim to compute:
+%
+\begin{equation*}
+    \sum_{t=1}^T 
+    \KL
+    \big(
+    q_\phi(z_t | z_{t-1}, x_{t:T})
+    \parallel
+    p_\theta(z_t | z_{t-1})
+    \big)
+\end{equation*}
+
+\subsection*{KL Divergence Between Two Gaussian Distributions}
+
+The KL divergence between two multivariate Gaussian distributions
+$ \mathcal{N}(\bm{z}; \bm{\mu}_1, \Sigma_1) $ and 
+$ \mathcal{N}(\bm{z}; \bm{\mu}_2, \Sigma_2) $ is given by:
+
+\begin{equation*}
+\KL \big( \mathcal{N}(\bm{z}; \bm{\mu}_1, \Sigma_1) 
+\parallel \mathcal{N}(\bm{z}; \bm{\mu}_2, \Sigma_2) \big) = 
+\frac{1}{2} \left( \text{tr}(\Sigma_2^{-1} \Sigma_1) + 
+(\bm{\mu}_2 - \bm{\mu}_1)^T \Sigma_2^{-1} (\bm{\mu}_2 - \bm{\mu}_1) 
+- k + \log \frac{|\Sigma_2|}{|\Sigma_1|} \right)
+\end{equation*}
+
+where $k$ is the dimensionality of the Gaussian distributions.
+
+\subsection*{Simplification for Diagonal Covariance Matrices}
+
+Since both $q_\phi$ and $p_\theta$ are diagonal Gaussian distributions,
+their covariance matrices are diagonal. Let's denote:
+
+\begin{equation*}
+\Sigma_{\phi} = \text{diag}\big(\sigma^2_{\phi}(\bm{z}_{t-1}, 
+\bm{x}_{t:T})\big)
+\end{equation*}
+\begin{equation*}
+\Sigma_{\theta} = \text{diag}\big(\sigma^2_{\theta_{\bm{z}}}
+(\bm{z}_{t-1})\big)
+\end{equation*}
+
+For diagonal matrices, the trace and determinant operations simplify:
+
+\begin{equation*}
+\text{tr}(\Sigma_{\theta}^{-1} \Sigma_{\phi}) = \sum_{i} 
+\frac{\sigma^2_{\phi, i}(\bm{z}_{t-1}, \bm{x}_{t:T})}
+{\sigma^2_{\theta_{\bm{z}}, i}(\bm{z}_{t-1})}
+\end{equation*}
+\begin{equation*}
+\log \frac{|\Sigma_{\theta}|}{|\Sigma_{\phi}|} = 
+\sum_{i} \log \frac{\sigma^2_{\theta_{\bm{z}}, i}(\bm{z}_{t-1})}
+{\sigma^2_{\phi, i}(\bm{z}_{t-1}, \bm{x}_{t:T})}
+\end{equation*}
+
+\subsection*{Final Computation}
+
+The KL divergence for each time step $t$ is:
+
+\begin{align*}
+\KL\big( q_\phi(\bm{z}_t | \bm{z}_{t-1}, \bm{x}_{t:T}) 
+\parallel p_\theta(\bm{z}_t | \bm{z}_{t-1}) \big) = 
+\frac{1}{2} \Bigg(& 
+    \sum_{i} \frac{\sigma^2_{\phi, i}(\bm{z}_{t-1}, \bm{x}_{t:T})}
+    {\sigma^2_{\theta_{\bm{z}}, i}(\bm{z}_{t-1})} \quad + \\
+    & \sum_{i} \left( \mu_{\theta_{\bm{z}}, i}(\bm{z}_{t-1}) - 
+    \mu_{\phi, i}(\bm{z}_{t-1}, \bm{x}_{t:T}) \right)^2 \frac{1}
+    {\sigma^2_{\theta_{\bm{z}}, i}(\bm{z}_{t-1})} - k \quad + \\
+    & \sum_{i} \log \frac{\sigma^2_{\theta_{\bm{z}}, i}(\bm{z}_{t-1})}
+    {\sigma^2_{\phi, i}(\bm{z}_{t-1}, \bm{x}_{t:T})} \Bigg)
+\end{align*}
+
+Summing over all time steps $t = 1, \dots, T$:
+
+\begin{equation*}
+\sum_{t=1}^T \KL\big( q_\phi(\bm{z}_t | \bm{z}_{t-1}, 
+\bm{x}_{t:T})
+\parallel p_\theta(\bm{z}_t | \bm{z}_{t-1}) \big) = 
+\end{equation*}
+\begin{equation}
+    \frac{1}{2} \sum_{t=1}^T \left( 
+        \sum_{i} \left( 
+            \frac{\sigma^2_{\phi, i}(\bm{z}_{t-1}, \bm{x}_{t:T})}{\sigma^2_{\theta_{\bm{z}}, i}(\bm{z}_{t-1})} 
+            + \frac{(\mu_{\theta_{\bm{z}}, i}(\bm{z}_{t-1}) - \mu_{\phi, i}(\bm{z}_{t-1}, \bm{x}_{t:T}))^2}{\sigma^2_{\theta_{\bm{z}}, i}(\bm{z}_{t-1})} 
+            - 1 
+            + \log \frac{\sigma^2_{\theta_{\bm{z}}, i}(\bm{z}_{t-1})}{\sigma^2_{\phi, i}(\bm{z}_{t-1}, \bm{x}_{t:T})} 
+        \right)
+    \right)\label{eq:regularization_term}
+\end{equation}
+\noindent In the estimator \eqref{eq:elbo_estimator}, each term of this sum
+is evaluated at the sampled previous state $\dot{\bm{z}}_{t-1}$, both in
+the parameters of $q_\phi$ and in those of $p_{\theta_{\bm{z}}}$. The
+term $-1$ inside the sum contributes the constant $-\frac{T d_z}{2}$,
+where $d_z$ is the dimension of $\bm{z}_t$. It does not depend on the
+parameters, which is why it can be dropped from the loss
+(Section~\ref{sec:loss}).

@@ -1,0 +1,118 @@
+\section{Detailed Mathematical Development of the Reconstruction Term}
+\label{sec:elbo_recon}
+%
+\subsection*{Problem Setup}
+
+Given the probability distribution:
+\begin{equation*}
+    p_{\theta_{\bm{x}}}(\bm{x}_t | \bm{z}_{t}) = 
+    \mathcal{N}(\bm{x}_t; \mu_{\theta_{\bm{x}}}(\bm{z}_{t}), 
+    \Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}))
+\end{equation*}
+
+where $\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}) = 
+diag(\sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}))$,
+we aim to develop the expression:
+
+\begin{equation*}
+    \sum_{t=1}^T \Big[ \log p_\theta(x_t | z_{t}) \Big]
+\end{equation*}
+
+\subsection*{Logarithm of the Probability Distribution}
+The probability density function (PDF) of a multivariate normal 
+distribution $\mathcal{N}(\bm{x}_t; \mu_{\theta_{\bm{x}}}(\bm{z}_{t}), 
+\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}))$ is given by:
+%
+\begin{equation*}
+    p_{\theta_{\bm{x}}}(\bm{x}_t | \bm{z}_{t}) = 
+    \frac{1}{(2\pi)^{d/2} 
+    \big|\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}) \big|^{1/2}} 
+    \exp\left(-\frac{1}{2} \big(\bm{x}_t - 
+    \mu_{\theta_{\bm{x}}}(\bm{z}_{t})\big)^\top 
+    \big(\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t})\big)^{-1} \big(\bm{x}_t - 
+    \mu_{\theta_{\bm{x}}}(\bm{z}_{t})\big)\right)    
+\end{equation*}
+%
+\newline
+In this context, \(d\) represents the dimensionality of the random variable 
+\(\bm{x}_t\). Specifically, \(\bm{x}_t\) is a \(d\)-dimensional vector, 
+and \(\mu_{\theta_{\bm{x}}}(\bm{z}_{t})\) is also a \(d\)-dimensional vector. 
+The covariance matrix \(\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t})\) is a 
+\(d \times d\) diagonal matrix, where 
+each diagonal element corresponds to the variance of one dimension of \(\bm{x}_t\).\\
+%
+\newline
+%
+Taking the logarithm, we get:
+\begin{equation*}
+    \log p_{\theta_{\bm{x}}}(\bm{x}_t | \bm{z}_{t}) = 
+    -\frac{d}{2} \log(2\pi) - \frac{1}{2} \log 
+    \big|\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t})\big| - 
+    \frac{1}{2} \big(\bm{x}_t - \mu_{\theta_{\bm{x}}}(\bm{z}_{t})\big)^\top 
+    \big(\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t})\big)^{-1} 
+    \big(\bm{x}_t - \mu_{\theta_{\bm{x}}}(\bm{z}_{t})\big)
+\end{equation*}
+
+
+\subsection*{Simplify the Logarithm Expression}
+Given that 
+\(\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}) = 
+diag(\sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}))\), we have:
+\begin{equation*}
+    \log |\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t})| = 
+    \log \prod_{i=1}^d \sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t}) = 
+    \sum_{i=1}^d \log \sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t})
+\end{equation*}
+
+and
+\begin{equation*}
+    (\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}))^{-1} = 
+    \begin{pmatrix}
+    \frac{1}{\sigma^2_{\theta_{\bm{x}}, 1}(\bm{z}_{t})} & 0 & \cdots & 0 \\
+    0 & \frac{1}{\sigma^2_{\theta_{\bm{x}}, 2}(\bm{z}_{t})} & \cdots & 0 \\
+    \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & \cdots & \frac{1}{\sigma^2_{\theta_{\bm{x}}, d}(\bm{z}_{t})}
+    \end{pmatrix}
+\end{equation*}
+
+Thus,
+\begin{equation*}
+    \big(\bm{x}_t - \mu_{\theta_{\bm{x}}}(\bm{z}_{t})\big)^\top 
+    \big(\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t})\big)^{-1} 
+    \big(\bm{x}_t - \mu_{\theta_{\bm{x}}}(\bm{z}_{t})\big) = 
+    \sum_{i=1}^d \frac{\big(x_{t,i} - \mu_{\theta_{\bm{x}}, i}(\bm{z}_{t})\big)^2}
+    {\sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t})}
+\end{equation*}
+
+and
+\begin{equation}
+    \log p_{\theta_{\bm{x}}}(\bm{x}_t | \bm{z}_{t}) = 
+    -\frac{d}{2} \log(2\pi) - 
+    \frac{1}{2} \sum_{i=1}^d \log \sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t}) - 
+    \frac{1}{2} \sum_{i=1}^d \frac{\big(x_{t,i} - \mu_{\theta_{\bm{x}}, i}(\bm{z}_{t})\big)^2}
+    {\sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t})}\label{eq:log_p_theta_x_given_z}
+\end{equation}
+
+\subsection*{Summing Over Time Steps}
+Now, we sum over all time steps \(t\) from 1 to \(T\):
+\begin{equation*}
+    \sum_{t=1}^T \log p_{\theta_{\bm{x}}}(\bm{x}_t | \bm{z}_{t}) = 
+    \sum_{t=1}^T \left[ -\frac{d}{2} \log(2\pi) - 
+    \frac{1}{2} \sum_{i=1}^d \log \sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t}) - 
+    \frac{1}{2} \sum_{i=1}^d \frac{\big(x_{t,i} - \mu_{\theta_{\bm{x}}, i}(\bm{z}_{t})\big)^2}
+    {\sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t})} \right]
+\end{equation*}
+
+\subsection*{Final Expression}
+\begin{equation}
+    \sum_{t=1}^T \log p_{\theta_{\bm{x}}}(\bm{x}_t | \bm{z}_{t}) = 
+    - \frac{Td}{2} \log(2\pi) - \frac{1}{2} \sum_{t=1}^T 
+    \sum_{i=1}^d \left[ \log \sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t}) +
+    \frac{\big(x_{t,i} - \mu_{\theta_{\bm{x}}, i}(\bm{z}_{t})\big)^2}
+    {\sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t})} \right]
+    \label{eq:sum_log_p_theta_x_given_z}
+\end{equation}
+\noindent In the estimator \eqref{eq:elbo_estimator}, this expression is
+evaluated at the sampled latent states $\dot{\bm{z}}_{1:T}$. The first
+term, $-\frac{Td}{2}\log(2\pi)$, does not depend on the parameters and is
+dropped from the loss (Section~\ref{sec:loss}).

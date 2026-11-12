@@ -1,0 +1,143 @@
+\chapter{Kalman Filter}\label{chap:kalman}
+
+\section{Introduction}
+
+The Kalman filter estimates the state of a linear dynamical system from a
+sequence of noisy measurements. In the robotics and signal-processing
+literature the state at time $t$ is usually written $\mathbf{x}_t$ and
+the measurement $\mathbf{z}_t$ (see, e.g., \cite{thrun2005probabilistic}).
+The Deep Kalman Filter paper \cite{krishnan2015deep} follows the VAE
+convention instead, and I do the same throughout this report:
+$\mathbf{z}_t$ is the \emph{latent} state and $\mathbf{x}_t$ the
+\emph{observed} measurement.
+
+\begin{story}[Control input $\mathbf{u}_{t-1}$ versus $\mathbf{u}_{t}$]
+Krishnan et al.\ write the control input that drives the transition from
+$t-1$ to $t$ as $\mathbf{u}_{t-1}$, but when they define their
+variational models, $\mathbf{u}_{t}$ is synchronous with
+$\mathbf{z}_{t}$. I keep the convention of the Kalman-filter literature
+and write $\mathbf{u}_{t}$ for the input acting on the transition into
+$\mathbf{z}_{t}$. This is only a matter of indexing.
+\end{story}
+
+\section{System Model}
+
+The system is described by an initial belief, a state-transition
+equation and an observation equation.
+
+\paragraph{Initial state.}
+$\mathbf{z}_{0} \sim \mathcal{N}(\boldsymbol{\mu}_{0},
+\boldsymbol{\Sigma}_{0})$.
+
+\paragraph{State transition.} For $t \geq 1$,
+\begin{equation*}
+    \mathbf{z}_t = \mathbf{G}_t \mathbf{z}_{t-1} + \mathbf{B}_t
+    \mathbf{u}_t + \boldsymbol{\varepsilon}_t,
+    \qquad
+    \boldsymbol{\varepsilon}_t \sim \mathcal{N}(\mathbf{0},
+    \boldsymbol{\Sigma}_{t}),
+\end{equation*}
+where $\mathbf{G}_t$ is the state-transition matrix, $\mathbf{B}_t$ the
+control-input matrix, $\mathbf{u}_t$ the (known) control input and
+$\boldsymbol{\varepsilon}_t$ the process noise. Equivalently,
+\begin{equation}
+    p(\mathbf{z}_t \mid \mathbf{z}_{t-1}, \mathbf{u}_t) =
+    \mathcal{N}(\mathbf{z}_t;\ \mathbf{G}_t \mathbf{z}_{t-1} +
+    \mathbf{B}_t \mathbf{u}_t,\ \boldsymbol{\Sigma}_{t}).
+    \label{eq:1}
+\end{equation}
+
+\paragraph{Observation.} For $t \geq 1$,
+\begin{equation*}
+    \mathbf{x}_t = \mathbf{F}_t \mathbf{z}_t + \boldsymbol{\eta}_t,
+    \qquad
+    \boldsymbol{\eta}_t \sim \mathcal{N}(\mathbf{0},
+    \boldsymbol{\Gamma}_{t}),
+\end{equation*}
+where $\mathbf{F}_t$ is the observation matrix and
+$\boldsymbol{\eta}_t$ the measurement noise. Equivalently,
+\begin{equation}
+    p(\mathbf{x}_t \mid \mathbf{z}_t) =
+    \mathcal{N}(\mathbf{x}_t;\ \mathbf{F}_t \mathbf{z}_{t},\
+    \boldsymbol{\Gamma}_{t}).
+    \label{eq:2}
+\end{equation}
+
+\section{Kalman Filter Algorithm}
+
+Write $\hat{\mathbf{z}}_{t}$ and $\mathbf{P}_{t}$ for the mean and
+covariance of the state given the measurements up to time $t$. The filter
+alternates two steps.
+
+\subsection{Prediction Step}
+\begin{itemize}
+    \item \textbf{Predicted (a priori) mean:}\quad
+    $\bar{\mathbf{z}}_{t} = \mathbf{G}_t \hat{\mathbf{z}}_{t-1} +
+    \mathbf{B}_t \mathbf{u}_t$.
+    \item \textbf{Predicted (a priori) covariance:}\quad
+    $\bar{\mathbf{P}}_{t} = \mathbf{G}_t \mathbf{P}_{t-1}
+    \mathbf{G}_t^\top + \boldsymbol{\Sigma}_{t}$.
+\end{itemize}
+These are the mean and covariance of the state at time $t$ given the
+measurements up to time $t-1$.
+
+\subsection{Update Step}
+\begin{itemize}
+    \item \textbf{Innovation (measurement residual):}\quad
+    $\mathbf{y}_t = \mathbf{x}_t - \mathbf{F}_t \bar{\mathbf{z}}_{t}$.
+    \item \textbf{Innovation covariance:}\quad
+    $\mathbf{S}_t = \mathbf{F}_t \bar{\mathbf{P}}_{t} \mathbf{F}_t^\top
+    + \boldsymbol{\Gamma}_{t}$.
+    \item \textbf{Kalman gain:}\quad
+    $\mathbf{K}_t = \bar{\mathbf{P}}_{t} \mathbf{F}_t^\top
+    \mathbf{S}_t^{-1}$.
+    \item \textbf{Updated (a posteriori) mean:}\quad
+    $\hat{\mathbf{z}}_{t} = \bar{\mathbf{z}}_{t} + \mathbf{K}_t
+    \mathbf{y}_t$.
+    \item \textbf{Updated (a posteriori) covariance:}\quad
+    $\mathbf{P}_{t} = (\mathbf{I} - \mathbf{K}_t \mathbf{F}_t)
+    \bar{\mathbf{P}}_{t}$.
+\end{itemize}
+
+\section{The probabilistic reading of the Kalman filter}
+
+Because every distribution in the model is Gaussian and every map is
+linear, all posterior distributions are Gaussian and can be computed in
+closed form. The two steps above compute exactly
+\begin{equation*}
+    p(\mathbf{z}_t \mid \mathbf{x}_{1:t-1}, \mathbf{u}_{1:t}) =
+    \mathcal{N}(\bar{\mathbf{z}}_{t}, \bar{\mathbf{P}}_{t})
+    \qquad\text{and}\qquad
+    p(\mathbf{z}_t \mid \mathbf{x}_{1:t}, \mathbf{u}_{1:t}) =
+    \mathcal{N}(\hat{\mathbf{z}}_{t}, \mathbf{P}_{t}).
+\end{equation*}
+The innovations also give the exact log-likelihood of the measurements,
+\begin{equation*}
+    \log p(\mathbf{x}_{1:T} \mid \mathbf{u}_{1:T}) =
+    \sum_{t=1}^{T} \log \mathcal{N}(\mathbf{y}_t;\ \mathbf{0},\
+    \mathbf{S}_t),
+\end{equation*}
+and a backward pass (the Rauch--Tung--Striebel smoother) gives the
+\emph{smoothing} distributions
+$p(\mathbf{z}_t \mid \mathbf{x}_{1:T}, \mathbf{u}_{1:T})$, which use the
+future measurements as well.
+
+\begin{inwords}
+In the linear-Gaussian case, \enquote{filtering} and \enquote{smoothing}
+are exact Bayesian inference, done with matrix algebra. The Deep Kalman
+Filter keeps the same probabilistic structure but makes the transition
+and emission non-linear. Then none of these distributions has a closed
+form any more. The DKF replaces exact inference by a neural network that
+\emph{approximates} the smoothing posterior, and replaces the exact
+log-likelihood by a lower bound on it. Chapters~\ref{chap:vae} and
+\ref{chap:dkf} explain how.
+\end{inwords}
+
+\section{Summary}
+
+The Kalman filter alternates a prediction step, which propagates the
+belief through the dynamics, and an update step, which corrects it with
+the new measurement. For linear-Gaussian systems this is exact inference,
+and the resulting estimate is optimal in the mean-squared-error sense.
+The Deep Kalman Filter replaces all the linear maps by non-linear maps
+parameterised by neural networks, at the price of approximate inference.

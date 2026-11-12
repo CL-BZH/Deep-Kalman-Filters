@@ -1,0 +1,52 @@
+\chapter{Conclusion}
+
+The Deep Kalman Filter keeps the probabilistic structure of the Kalman
+filter, a Markov chain of latent states with one emission per time step,
+and makes the transition and emission non-linear with neural networks.
+Exact inference is then impossible, and the model is trained like a VAE,
+by maximising a lower bound on the log-likelihood.\\
+
+Three points that the original paper leaves implicit are central to
+understanding the method:
+\begin{itemize}
+    \item \textbf{The structure of the inference network follows from
+    d-separation.} Given $\mathbf{z}_{t-1}$, the true posterior of
+    $\mathbf{z}_t$ depends only on the future observations
+    $\mathbf{x}_{t:T}$, which is why the inference network combines
+    $\mathbf{z}_{t-1}$ with a backward RNN.
+    \item \textbf{The ELBO splits into one KL per time step}, by the
+    chain rule of the KL divergence. Each of these is between two
+    Gaussians given $\mathbf{z}_{t-1}$ and has a closed form.
+    \item \textbf{One sampled trajectory gives an unbiased estimate of
+    the ELBO.} The ELBO is linear in its expectations under the
+    intractable marginals of the inference network, and ancestral
+    sampling provides exact samples of all of these marginals at once.
+\end{itemize}
+
+The autoregressive variants I designed add edges from past observations
+to the latent state, which gives the transition model direct access to
+the history and greatly improves forecasting on the sine-wave data.
+Redoing the d-separation argument on the new graph shows that these
+edges also change the posterior: it now depends on the past observations
+as well as the future ones. The FAR DKF, whose inference network sees
+both, is therefore the principled inference model for the AR DKF
+generative model. On the Lorenz data, however, the three autoregressive
+variants perform comparably: over four training runs per experiment,
+neither the forecasting errors nor the ELBOs on test data rank them
+consistently, and the variability between runs is larger than the
+differences between models.\\
+
+Several directions remain open. The variability between training runs
+should be reduced, or at least controlled with fixed random seeds and
+more repetitions, before the variants can be compared. Tighter estimates
+of the log-likelihood, with many more importance samples, would be
+needed to measure the differences between their ELBO gaps.
+Forecasts should be evaluated with the predictive mean, or with a
+probabilistic score, rather than with a single sampled path. The
+reconstruction error currently matches the noise level, which suggests
+that the inference network reproduces the observations, noise included,
+rather than denoising them: monitoring the two terms of the ELBO
+separately would show how much of the ELBO each part of the model
+accounts for. Finally, control inputs, for example from an inertial
+measurement unit, could be added to the transition model as in the
+original formulation.

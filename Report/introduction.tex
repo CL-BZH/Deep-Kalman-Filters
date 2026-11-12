@@ -1,0 +1,34 @@
+\chapter{Introduction}
+
+The Deep Kalman Filter (DKF), introduced by Krishnan, Shalit and Sontag
+in 2015 \cite{krishnan2015deep}, is a sequential latent-variable model.
+It keeps the structure of the Kalman filter, a latent state that evolves
+as a Markov chain and emits one observation per time step, but replaces
+the linear-Gaussian transition and emission models by Gaussian
+distributions whose parameters are computed by neural networks. Since
+exact posterior inference is then intractable, the model is trained like
+a Variational Auto-Encoder (VAE): an inference network approximates the
+posterior over the latent trajectory, and the parameters of both networks
+are learned jointly by maximising the Evidence Lower Bound (ELBO).\\
+
+This report presents the mathematics of the DKF, my implementation of
+it\footnote{The code is available
+\href{https://github.com/CL-BZH/Deep-Kalman-Filters/tree/main}{on
+GitHub}.}, and experiments on noisy sine waves and on sequences generated
+by the Lorenz attractor\footnote{The cover page shows a realisation of
+the Lorenz attractor used to test the models.}. It is organised as
+follows.
+\begin{itemize}
+    \item Chapter 2 recalls the Kalman filter. It is the linear-Gaussian
+    special case in which the posterior that the DKF approximates can be
+    computed exactly.
+    \item Chapter 3 recalls the VAE and, in particular, \emph{why} the
+    ELBO is a lower bound on the log-likelihood.
+    \item Chapter 4 is the core of the report: the DKF model, the
+    structure of its true posterior (derived with d-separation), the
+    factorised ELBO, how that ELBO is estimated by sampling, the
+    implementation, and three extensions I designed: the autoregressive
+    DKF (AR DKF) and its two variants FAR DKF and BAR DKF.
+    \item The appendices give the complete derivations and the
+    experimental results. The annex recalls d-separation.
+\end{itemize}

@@ -1,0 +1,115 @@
+args:
+  dataset: lorenz
+  enable_animation: false
+  generate_latex: false
+  lorenz_initial_point:
+  - 2
+  - 1
+  - 1
+  lorenz_points: 20000
+  lorenz_range:
+  - 8600
+  - 10500
+  loss_function: weighted_mse
+  models:
+  - AR_DKF_1
+  - FAR_DKF_1
+  - BAR_DKF_1
+  noise_var: 0.006
+  normalization_type: standardize
+  per_feature: false
+  per_sequence: false
+  show_eval: false
+  test_seq_len: 100
+  train_seq_len: 100
+  training_config_section: PREDICTION_TRAINING
+models_config:
+- activation: tanh
+  combiner_alpha: 0.5
+  combiner_alpha_init: 0.1
+  combiner_layers_dim:
+  - 64
+  combiner_learnable_alpha: true
+  combiner_output_dim: 64
+  combiner_type: linear
+  decoder_layers_dim:
+  - 64
+  - 32
+  device: cpu
+  dropout_p: 0.0
+  encoder_layers_dim:
+  - 64
+  latent_transition_layers_dim:
+  - 64
+  learnable_init_x: false
+  learnable_init_z: true
+  pz_f_rnn_hidden_size: 64
+  pz_f_rnn_num_layers: 1
+  q_b_rnn_hidden_size: 64
+  q_b_rnn_num_layers: 1
+  x_dim: 3
+  z_dim: 16
+- activation: tanh
+  combiner_alpha:
+  - 0.5
+  - 0.5
+  combiner_alpha_init:
+  - 0.1
+  - 0.1
+  combiner_layers_dim:
+  - 64
+  combiner_learnable_alpha:
+  - true
+  - true
+  combiner_output_dim: 64
+  combiner_type: linear
+  decoder_layers_dim:
+  - 64
+  - 32
+  device: cpu
+  dropout_p: 0.0
+  encoder_layers_dim:
+  - 64
+  latent_transition_layers_dim:
+  - 64
+  learnable_init_x: false
+  learnable_init_z: true
+  pz_f_rnn_hidden_size: 64
+  pz_f_rnn_num_layers: 1
+  q_b_rnn_hidden_size: 64
+  q_b_rnn_num_layers: 1
+  q_f_rnn_hidden_size: 64
+  q_f_rnn_num_layers: 1
+  x_dim: 3
+  z_dim: 16
+- activation: tanh
+  combiner_alpha: 0.5
+  combiner_alpha_init: 0.1
+  combiner_layers_dim:
+  - 64
+  combiner_learnable_alpha: true
+  combiner_output_dim: 64
+  combiner_type: linear
+  decoder_layers_dim:
+  - 64
+  - 32
+  device: cpu
+  dropout_p: 0.0
+  encoder_layers_dim:
+  - 64
+  latent_transition_layers_dim:
+  - 64
+  learnable_init_x: false
+  learnable_init_z: true
+  pz_f_rnn_hidden_size: 64
+  pz_f_rnn_num_layers: 1
+  q_b_rnn_hidden_size: 64
+  q_b_rnn_num_layers: 1
+  x_dim: 3
+  z_dim: 16
+training_config:
+  learning_rate: 0.001
+  num_epochs: 120
+  pred_batch_size: 32
+  train_batch_size: 32
+  val_batch_size: 16

@@ -1,0 +1,157 @@
+\section{Detailed Derivation of the ELBO}\label{sec:elbo_derivation}
+
+\begin{story}[Notation]
+As in the main text, $p_{\theta}(\mathbf{z}_{1} \mid \mathbf{z}_{0},
+\star)$ is the prior on $\mathbf{z}_1$, and $q_{\phi}(\mathbf{z}_{1}
+\mid \mathbf{z}_{0}, \star)$ is the first factor of the inference
+network, with $\mathbf{z}_0$ fixed or learned. To lighten the formulas,
+$q$ stands for $q_\phi(\cdot \mid \mathbf{x}_{1:T}, \mathbf{u}_{1:T})$
+and its factors, and $p$ for $p_\theta$.
+\end{story}
+
+\subsection*{Step 1: the bound}
+
+As for the VAE (Chapter~\ref{chap:vae}), Jensen's inequality gives
+\begin{equation*}
+    \log p(\mathbf{x}_{1:T} \mid \mathbf{u}_{1:T}) \;\geq\;
+    \mathcal{L} := \E_{q(\mathbf{z}_{1:T})}\left[\log
+    \frac{p(\mathbf{x}_{1:T}, \mathbf{z}_{1:T} \mid \mathbf{u}_{1:T})}
+    {q(\mathbf{z}_{1:T})}\right],
+\end{equation*}
+with a gap equal to $\KL\big(q(\mathbf{z}_{1:T}) \,\|\,
+p(\mathbf{z}_{1:T} \mid \mathbf{x}_{1:T}, \mathbf{u}_{1:T})\big)$.
+
+\subsection*{Step 2: substitute the factorisations}
+
+With the generative model \eqref{eq:generative_model} and the inference
+model \eqref{q_phi},
+\begin{equation*}
+    \log \frac{p(\mathbf{x}_{1:T}, \mathbf{z}_{1:T} \mid \mathbf{u}_{1:T})}
+    {q(\mathbf{z}_{1:T})} =
+    \sum_{t=1}^T \log p(\mathbf{x}_t \mid \mathbf{z}_t)
+    \;-\; \sum_{t=1}^T \underbrace{\log \frac{q(\mathbf{z}_t \mid
+    \mathbf{z}_{t-1}, \mathbf{x}_{t:T}, \mathbf{u}_{t:T})}
+    {p(\mathbf{z}_t \mid \mathbf{z}_{t-1}, \mathbf{u}_t)}}_{=:\ r_t(
+    \mathbf{z}_{t-1}, \mathbf{z}_t)}.
+\end{equation*}
+By linearity of expectation,
+\begin{equation}
+    \mathcal{L} = \sum_{t=1}^T \E_{q(\mathbf{z}_{1:T})}\big[\log
+    p(\mathbf{x}_t \mid \mathbf{z}_t)\big] - \sum_{t=1}^T
+    \E_{q(\mathbf{z}_{1:T})}\big[r_t(\mathbf{z}_{t-1}, \mathbf{z}_t)\big].
+    \label{eq:elbo_step2}
+\end{equation}
+Each term depends on one or two consecutive latent states only. The next
+step shows how to integrate out all the others.
+
+\subsection*{Step 3: integrating out the latent states a term does not
+depend on}
+
+\begin{proposition}\label{prop:marginalise}
+For any functions $f$ and $g$,
+\begin{align*}
+    \E_{q(\mathbf{z}_{1:T})}\big[f(\mathbf{z}_t)\big] &=
+    \E_{q(\mathbf{z}_t)}\big[f(\mathbf{z}_t)\big], \\
+    \E_{q(\mathbf{z}_{1:T})}\big[g(\mathbf{z}_{t-1}, \mathbf{z}_t)\big] &=
+    \E_{q(\mathbf{z}_{t-1})}\Big[\E_{q(\mathbf{z}_t \mid
+    \mathbf{z}_{t-1}, \mathbf{x}_{t:T}, \mathbf{u}_{t:T})}\big[
+    g(\mathbf{z}_{t-1}, \mathbf{z}_t)\big]\Big],
+\end{align*}
+where $q(\mathbf{z}_t)$ and $q(\mathbf{z}_{t-1})$ denote the marginals of
+the inference model.
+\end{proposition}
+
+\begin{proof}
+Write the expectation as an integral against
+$q(\mathbf{z}_{1:T}) = \prod_{s=1}^T q(\mathbf{z}_s \mid
+\mathbf{z}_{s-1}, \mathbf{x}_{s:T}, \mathbf{u}_{s:T})$.
+
+\emph{Future states.} The integrand does not depend on $\mathbf{z}_T$
+(when $t < T$), and $\mathbf{z}_T$ appears only in the last factor, which
+is a probability density in $\mathbf{z}_T$. Hence
+\[
+    \int q(\mathbf{z}_T \mid \mathbf{z}_{T-1}, \mathbf{x}_{T},
+    \mathbf{u}_{T})\,d\mathbf{z}_T = 1,
+\]
+and $\mathbf{z}_T$ disappears. Repeating the argument for
+$\mathbf{z}_{T-1}, \dots, \mathbf{z}_{t+1}$ removes all future states.
+What remains is the integral against
+$q(\mathbf{z}_{1:t}) = \prod_{s=1}^{t} q(\mathbf{z}_s \mid
+\mathbf{z}_{s-1}, \cdot)$, the marginal of the first $t$ states.
+
+\emph{Past states.} Split $q(\mathbf{z}_{1:t}) =
+q(\mathbf{z}_{1:t-1})\, q(\mathbf{z}_t \mid \mathbf{z}_{t-1},
+\mathbf{x}_{t:T}, \mathbf{u}_{t:T})$. The inner integral over
+$\mathbf{z}_t$ is the inner expectation in the statement. The resulting
+function of $\mathbf{z}_{t-1}$ is then integrated against
+$q(\mathbf{z}_{1:t-1})$. Integrating out $\mathbf{z}_{1:t-2}$, on which
+it does not depend, gives the marginal $q(\mathbf{z}_{t-1})$ by
+definition of a marginal. For $f(\mathbf{z}_t)$, integrating out
+$\mathbf{z}_{1:t-1}$ in the same way gives $q(\mathbf{z}_t)$.
+\end{proof}
+
+\begin{story}[About the factor $q(\mathbf{z}_t \mid \mathbf{z}_{1:t-1},
+\cdot)$]
+The proof uses $q(\mathbf{z}_t \mid \mathbf{z}_{1:t-1}, \mathbf{x}_{1:T},
+\mathbf{u}_{1:T}) = q(\mathbf{z}_t \mid \mathbf{z}_{t-1},
+\mathbf{x}_{t:T}, \mathbf{u}_{t:T})$. This holds \emph{by construction}
+of the inference model \eqref{q_phi}: the inference network is built to
+receive only these inputs. D-separation is what justified that design,
+because the true posterior has the same property; but in the derivation
+itself, the equality is a property of $q$, not a d-separation statement.
+\end{story}
+
+\subsection*{Step 4: the result}
+
+Apply Proposition~\ref{prop:marginalise} to \eqref{eq:elbo_step2}, with
+$f = \log p(\mathbf{x}_t \mid \cdot)$ and $g = r_t$. For the second
+term, the inner expectation is a KL divergence:
+\begin{equation*}
+    \E_{q(\mathbf{z}_t \mid \mathbf{z}_{t-1}, \mathbf{x}_{t:T},
+    \mathbf{u}_{t:T})}\big[r_t(\mathbf{z}_{t-1}, \mathbf{z}_t)\big] =
+    \KL\big(q(\mathbf{z}_t \mid \mathbf{z}_{t-1}, \mathbf{x}_{t:T},
+    \mathbf{u}_{t:T}) \,\big\|\, p(\mathbf{z}_t \mid \mathbf{z}_{t-1},
+    \mathbf{u}_{t})\big).
+\end{equation*}
+Therefore
+\begin{equation*}
+\boxed{
+\begin{aligned}
+    \mathcal{L} =\ & \sum_{t=1}^T \E_{q_\phi(\mathbf{z}_{t} \mid
+    \mathbf{x}_{1:T}, \mathbf{u}_{1:T})} \big[\log p_\theta(\mathbf{x}_t
+    \mid \mathbf{z}_{t})\big] \\
+    & - \sum_{t=1}^T \E_{q_\phi(\mathbf{z}_{t-1} \mid \mathbf{x}_{1:T},
+    \mathbf{u}_{1:T})} \Big[ \KL\big(q_\phi(\mathbf{z}_t \mid
+    \mathbf{z}_{t-1}, \mathbf{x}_{t:T}, \mathbf{u}_{t:T}) \,\big\|\,
+    p_\theta(\mathbf{z}_t \mid \mathbf{z}_{t-1}, \mathbf{u}_{t})\big)
+    \Big],
+\end{aligned}
+}
+\end{equation*}
+which is \eqref{eq:dkf_elbo}. The second sum is the \emph{chain rule}
+of the KL divergence: for two Markov chains,
+\begin{equation*}
+    \KL\big(q(\mathbf{z}_{1:T}) \,\|\, p(\mathbf{z}_{1:T})\big) =
+    \sum_{t=1}^T \E_{q(\mathbf{z}_{t-1})}\Big[\KL\big(q(\mathbf{z}_t
+    \mid \mathbf{z}_{t-1}) \,\|\, p(\mathbf{z}_t \mid \mathbf{z}_{t-1})
+    \big)\Big].
+\end{equation*}
+
+\subsection*{Remark: iterated expectations}
+
+Applying the proof of Proposition~\ref{prop:marginalise} to all time
+steps writes the expectation under $q(\mathbf{z}_{1:T})$ as
+\emph{iterated} conditional expectations,
+\begin{equation*}
+    \E_{q(\mathbf{z}_{1:T})}[h] =
+    \E_{q(\mathbf{z}_1 \mid \mathbf{z}_0, \cdot)}\Big[
+    \E_{q(\mathbf{z}_2 \mid \mathbf{z}_1, \cdot)}\big[ \cdots
+    \E_{q(\mathbf{z}_T \mid \mathbf{z}_{T-1}, \cdot)}[h] \cdots \big]
+    \Big].
+\end{equation*}
+Each inner expectation is passed to the next level as it is, with no
+non-linear function applied to it, so the iterated expectations collapse
+into a single expectation over the joint distribution (the tower
+property). That is why ancestral sampling, one sample per level, gives
+an unbiased estimate (Proposition~\ref{prop:unbiased}).
+

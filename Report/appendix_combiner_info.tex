@@ -1,0 +1,247 @@
+\section{Combiner in the Deep Kalman Filter (DKF)}\label{combiner_info}
+    
+The \textbf{Combiner} is a key component in the DKF model, responsible 
+for integrating information from different sources to produce a unified 
+representation. Specifically, it combines the previous latent state 
+($\bm{z}_{t-1}$) with the hidden states of one or more Recurrent Neural 
+Networks (RNNs) to create an output that is fed into the encoder. 
+This output is then used to compute the parameters of the latent 
+distribution ($\bm{z}_t$).
+
+\subsection*{Purpose of the Combiner}
+
+The Combiner's primary role is to:
+\begin{enumerate}
+    \item \textbf{Integrate Information}: Combine the previous latent 
+    state ($\bm{z}_{t-1}$) with the hidden states of RNNs (e.g., backward RNN, 
+    forward RNN) to create a richer representation.
+    \item \textbf{Produce a Unified Output}: Generate a single tensor that 
+    can be fed into the encoder to compute the mean and log variance of the 
+    latent state ($\bm{z}_t$).
+    \item \textbf{Flexibility}: Allow for different ways of combining 
+    information, such as linear combination or using a Multi-Layer 
+    Perceptron (MLP).
+\end{enumerate}
+
+\subsection*{Key Concepts}
+
+\begin{itemize}
+    \item \textbf{Latent State ($\bm{z}_{t-1}$)}:
+        \begin{itemize}
+            \item The latent state from the previous time step, which 
+            represents the hidden variables of the model.\\
+            At $t=1$, $\bm{z}_0$ is either a fix tensor of zeros or a learnable
+            parameter initialiazed with zeros.
+        \end{itemize}
+    \item \textbf{RNN Hidden States ($\bm{h}_{t}^{i}$)}:
+        \begin{itemize}
+            \item The output of one or more RNNs (e.g., backward RNN, 
+            forward RNN) that process the input sequence. These hidden 
+            states capture temporal dependencies in the data.
+        \end{itemize}
+    \item \textbf{Combination Strategy}:
+        \begin{itemize}
+            \item The method used to combine $\bm{z}_{t-1}$ with the RNN 
+            hidden states. This can be a simple linear combination or 
+            a more complex MLP-based combination.
+        \end{itemize}
+\end{itemize}
+
+\subsection*{Combiner Types}
+
+The Combiner is implemented in two main ways:
+\begin{enumerate}
+    \item \textbf{Linear Combiner}: Combines $\bm{z}_{t-1}$ and RNN hidden 
+    states using a weighted sum (linear combination).
+    \item \textbf{MLP Combiner}: Combines $\bm{z}_{t-1}$ and RNN hidden 
+    states using a Multi-Layer Perceptron (MLP).
+\end{enumerate}
+
+\subsection{Linear Combiner}
+
+The \textbf{Linear Combiner} performs a weighted sum of the previous 
+latent state ($\bm{z}_{t-1}$) and the RNN hidden states. 
+The weights are controlled by a parameter $\alpha_i$, which determines 
+the contribution of each input.
+
+\subsubsection*{Key Parameters}
+\begin{itemize}
+    \item \code{$z\_dim$}: Dimension of the latent state ($\bm{z}_{t-1}$).
+    \item \code{$rnn\_dims$}: Dimensions of the RNN hidden states. 
+    This can be a single dimension or a list of dimensions if multiple 
+    RNNs are used.
+    \item \code{$output\_dim$}: Dimension of the output tensor.
+    \item \code{$\alpha^i$}: Weight for the $i$-th RNN hidden state. 
+    This determines how much influence the mapped $\bm{z}_{t-1}$ has on 
+    the combination.
+\end{itemize}
+
+\subsubsection*{Formula}
+
+\begin{equation*}
+    \bm{combined}^{i}_{t} = \alpha^{i} \cdot \text{mapped}(\bm{z}_{t-1}) + 
+    (1 - \alpha^{i}) \cdot \bm{h}_{t}^{i}
+\end{equation*}
+
+Where:
+
+\begin{itemize}
+    \item $\text{mapped}(\bm{z}_{t-1}) = \tanh(\mathbf{W}^i \bm{z}_{t-1}
+    + \mathbf{c}^i)$: the previous latent state mapped to the dimension of
+    the $i$-th RNN hidden state by a linear layer followed by the
+    activation function ($\tanh$ in all experiments).
+    \item $\bm{h}_{t}^{i}$: The hidden state output of the $i$-th RNN
+    at time $t$.
+\end{itemize}
+
+With a single RNN and $\alpha = 0.5$, this is the combiner of Krishnan
+et al.'s follow-up work \cite{krishnan2017structured},
+$\frac{1}{2}\big(\tanh(\mathbf{W}\bm{z}_{t-1} + \mathbf{c}) +
+\bm{h}_t\big)$, followed by a linear layer.
+
+Two sets of weights are kept: \code{alpha\_init}, meant for the first
+time step, where $\bm{z}_{0}$ is a fixed or learned constant that carries
+no information about the sequence, and \code{alpha}, used for the
+following steps.
+
+\subsubsection*{How It Works}
+\begin{enumerate}
+    \item \textbf{Mapping $\bm{z}_{t-1}$}:
+        \begin{itemize}
+            \item The previous latent state ($\bm{z}_{t-1}$) is mapped to
+            the dimension of each RNN hidden state by separate linear
+            layers, each followed by the activation function.
+        \end{itemize}
+    \item \textbf{Weighted Sum}:
+        \begin{itemize}
+            \item The mapped $\bm{z}_{t-1}$ and the RNN hidden state are 
+            combined using a weighted sum. The weight $\alpha^i$ 
+            controls the contribution of the mapped $\bm{z}_{t-1}$, while 
+            $(1 - \alpha^i)$ controls the contribution of the RNN hidden 
+            state.
+        \end{itemize}
+    \item \textbf{Concatenation}:
+        \begin{itemize}
+            \item The combined tensors for all RNN hidden states are 
+            concatenated along the feature dimension.
+        \end{itemize}
+    \item \textbf{Final Linear Layer}:
+        \begin{itemize}
+            \item The concatenated tensor is passed through a final linear
+            layer to produce the output tensor of dimension \code{output\_dim}.
+        \end{itemize}
+\end{enumerate}
+
+\subsubsection*{Example}
+Suppose:
+
+\begin{itemize}
+    \item $\alpha^i = 0.3$
+    \item $\text{mapped}(\bm{z}_{t-1}) = \bm{mz}$
+    \item $\bm{h}_{t}^{i} = \bm{rnn\_h}$
+\end{itemize}
+
+The formula becomes:
+
+\begin{align*}
+    \bm{combined}^i &= 0.3 \cdot \bm{mz} + 
+    (1 - 0.3) \cdot \bm{rnn\_h} \\
+    &= 0.3 \cdot \bm{mz} + 0.7 \cdot \bm{rnn\_h}
+\end{align*}
+
+This means:
+\begin{itemize}
+    \item 30\% of the contribution comes from the mapped latent state 
+    $\text{mapped}$.
+    \item 70\% of the contribution comes from the RNN hidden state 
+    \code{rnn\_h}.
+\end{itemize}
+
+\subsection{MLP Combiner}
+
+The \textbf{MLP Combiner} uses a Multi-Layer Perceptron (MLP) to combine
+the previous latent state ($\bm{z}_{t-1}$) and the RNN hidden states.
+This allows for more complex interactions between the inputs.
+
+\subsubsection*{Key Parameters}
+\begin{itemize}
+    \item \code{z\_dim}: Dimension of the latent state ($\bm{z}_{t-1}$).
+    \item \code{rnn\_dims}: Dimensions of the RNN hidden states.
+    \item \code{output\_dim}: Dimension of the output tensor.
+    \item \code{layers\_dim}: List of dimensions for the hidden
+    layers in the MLP.
+    \item \code{activation}: Activation function 
+    (e.g., $\tanh$ or $\text{ReLU}$).
+\end{itemize}
+
+\subsubsection*{How It Works}
+\begin{enumerate}
+    \item \textbf{Concatenation}:
+        \begin{itemize}
+            \item The previous latent state ($\bm{z}_{t-1}$) and all RNN hidden
+            states are concatenated along the feature dimension.
+        \end{itemize}
+    \item \textbf{MLP Layers}:
+        \begin{itemize}
+            \item The concatenated tensor is passed through a series of
+            linear layers with activation functions in between.
+            \item The first layer maps the concatenated input to the first
+            hidden layer dimension.
+            \item Intermediate layers map the output of one hidden layer to
+            the next.
+            \item The final layer maps the last hidden layer to the output
+            dimension (\code{output\_dim}).
+        \end{itemize}
+    \item \textbf{Output}:
+        \begin{itemize}
+            \item The output of the MLP is the combined tensor, which is
+            then fed into the encoder.
+        \end{itemize}
+\end{enumerate}
+
+\subsubsection{Example}
+Suppose:
+\begin{itemize}
+    \item $\bm{z}_{t-1}$ has a dimension of 16.
+    \item Two RNN hidden states: $h^1_t$ (dimension 32) and $h^2_t$ (dimension 64).
+\end{itemize}
+%
+The concatenated input will have a dimension of \(16 + 32 + 64 = 112\).
+This concatenated tensor is passed through an MLP.
+
+\subsection{Combiner Factory}
+
+The \textbf{Combiner Factory} is a utility class that creates the
+appropriate Combiner based on the specified type ($\text{linear}$ or
+$\text{mlp}$). This allows for flexibility in choosing the combination
+strategy.
+
+\subsubsection*{Key Parameters}
+
+\begin{itemize}
+    \item \code{combiner\_type}: Type of Combiner to use 
+    (\text{linear} or \text{mlp}).
+    \item \textbf{Other Parameters}: Depend on the type of Combiner 
+    (e.g., \code{$\alpha^i$}, \code{layers\_dim}).
+\end{itemize}
+
+\subsubsection*{How It Works}
+
+\begin{itemize}
+    \item If \code{combiner\_type} = \code{linear}, the factory 
+    initializes a \code{DKF\_CombinerLinear} with the specified parameters.
+    \item If \code{combiner\_type} = \code{mlp}, the factory initializes 
+    a \code{DKF\_CombinerMLP} with the specified parameters.
+\end{itemize}
+\subsection{Summary of the Combiner's Role in the DKF}
+
+The Combiner is responsible for integrating the previous latent state
+($\bm{z}_{t-1}$) with the hidden states of RNNs to produce a unified
+representation. This representation is then used by the encoder to
+compute the parameters of the latent distribution ($\bm{z}_{t}$).
+The Combiner can be either a simple linear combination or a more complex
+MLP-based combination, depending on the model's requirements.
+\\
+By using the Combiner, the DKF model can effectively leverage both the
+temporal dependencies captured by RNNs and the latent state dynamics to
+model complex time series data.
