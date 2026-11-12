@@ -1,2 +1,25 @@
+# Python
 __pycache__/
+*.py[cod]
+
+# Jupyter
 .ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+
+# LaTeX build files (Report/)
+Report/*.aux
+Report/*.log
+Report/*.toc
+Report/*.lof
+Report/*.out
+Report/*.bbl
+Report/*.blg
+Report/*.fls
+Report/*.fdb_latexmk
+Report/*.synctex.gz
+
+# macOS
+.DS_Store
