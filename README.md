@@ -5,6 +5,11 @@
 
 This repository contains an implementation of **Deep Kalman Filters (DKF)** and its variants, including **Autoregressive Deep Kalman Filters (AR-DKF)**, **Forward Autoregressive Deep Kalman Filters (FAR-DKF)**, and **Bidirectional Autoregressive Deep Kalman Filters (BAR-DKF)**. These models are inspired by the paper [Deep Kalman Filters](https://arxiv.org/pdf/1511.05121) and are designed to model time series data with latent variables. The implementation includes training, evaluation, and prediction functionalities, and the models are tested on synthetic datasets such as the **Lorenz attractor** and **sine waves**.
 
+**Documentation**
+
+- **New to Deep Kalman Filters?** Start with the [tutorial in the Wiki](https://github.com/CL-BZH/Deep-Kalman-Filters/wiki). It explains, step by step, the model, its ELBO, why one sampled trajectory is enough to estimate it, and the autoregressive extensions.
+- **The project report** ([`Report/dkf_report.pdf`](Report/dkf_report.pdf)) gives the complete derivations and the experimental results.
+
 ---
 
 ## Table of Contents
@@ -44,11 +49,7 @@ The project is organized as follows:
 
 ```
 .
-├── Checkpoints/                    # Directory to store model checkpoints
-│   ├── lorenz_attractor_ar_dkf.pth
-│   ├── lorenz_attractor_dkf.pth
-│   ├── sine_wave_ar_dkf.pth
-│   └── sine_wave_dkf.pth
+├── Checkpoints/                    # Model checkpoints (created by training, not tracked)
 ├── Config/                         # Configuration files for models and training
 │   ├── models_conf.yaml            # Configuration file for model parameters
 │   └── training_conf.yaml          # Configuration file for training parameters
@@ -64,14 +65,18 @@ The project is organized as follows:
 │   ├── lorenz_attractor.ipynb      # Lorenz attractor data generation and visualization
 │   └── main.ipynb                  # Notebook for training and evaluating models interactively
 ├── README.md                       # This file
-├── Tests/                          # Directory for test runs and outputs
+├── Report/                         # Project report: LaTeX sources and PDF
+├── Tests/                          # Test runs and outputs (created by main.py, not tracked)
 ├── Utils/                          # Utility functions and tools
 │   ├── config_loader.py            # Utility for loading configuration files
 │   ├── loss_fcts.py                # Loss functions for training
 │   ├── model_fcts.py               # Utility functions for model building and training
 │   └── tools.py                    # Utility functions for data handling and visualization
+├── elbo_results.csv                # ELBO evaluation results used in the report
+├── evaluate_elbo.py                # Evaluates trained models: ELBO and importance-weighted bounds
 ├── main.py                         # Main script for running the project
-└── requirements.txt                # List of dependencies
+├── requirements.txt                # List of dependencies
+└── run_all.sh                      # Reproduces the Lorenz experiments of the report
 ```
 
 ---
