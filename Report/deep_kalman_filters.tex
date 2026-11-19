@@ -617,6 +617,79 @@ $\mathbf{x}$ of shape \code{(seq\_len, batch\_size, x\_dim)}.
 \end{enumerate}
 It returns everything the loss function needs.
 
+\subsection{From the loss to the code}\label{sec:loss_code}
+
+The two losses of Section~\ref{sec:loss} contain only sums, squares,
+divisions and logarithms of quantities that the networks output. The
+table below matches each of these quantities with one of the seven
+tensors returned by \code{forward}. All of them have the shape
+\code{(seq\_len, batch\_size, dim)}: the sum over $t$ runs along
+dimension 0, the minibatch along dimension 1 and the sum over $i$ along
+dimension 2.
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{In the losses} & \textbf{Tensor} & \textbf{Computed by} \\ \hline
+$x_{t,i}$ & \texttt{x} & the data \\ \hline
+$\mu_{\theta_{\mathbf{x}}, i}(\dot{\mathbf{z}}_{t})$ &
+\texttt{x\_hat} & \texttt{decoder} \\ \hline
+$\log \sigma^2_{\theta_{\mathbf{x}}, i}(\dot{\mathbf{z}}_{t})$ &
+\texttt{x\_hat\_logvar} & \texttt{decoder} \\ \hline
+$\mu_{\phi, i}(\dot{\mathbf{z}}_{t-1}, \mathbf{x}_{t:T})$ &
+\texttt{z\_mean} & \texttt{encoder}, after the \texttt{combiner} \\ \hline
+$\log \sigma^2_{\phi, i}(\dot{\mathbf{z}}_{t-1}, \mathbf{x}_{t:T})$ &
+\texttt{z\_logvar} & \texttt{encoder}, after the \texttt{combiner} \\ \hline
+$\mu_{\theta_{\mathbf{z}}, i}(\dot{\mathbf{z}}_{t-1})$ &
+\texttt{z\_transition\_mean} & \texttt{p\_z} \\ \hline
+$\log \sigma^2_{\theta_{\mathbf{z}}, i}(\dot{\mathbf{z}}_{t-1})$ &
+\texttt{z\_transition\_logvar} & \texttt{p\_z} \\ \hline
+\end{tabular}
+\end{center}
+The networks output log-variances rather than variances. A log-variance
+can be any real number, so the output of a network needs no constraint,
+and the variance $\exp(\cdot)$ is always positive. Each $\log \sigma^2$
+of the losses is therefore a tensor as it is, and each $\sigma^2$ is
+that tensor followed by \code{.exp()}.\\
+
+With this correspondence, \code{loss\_function} in
+\code{Utils/loss\_fcts.py} can be read against the two boxed
+expressions of Section~\ref{sec:loss}. The comments on the right are
+added here. The reconstruction term:
+{\small
+\begin{verbatim}
+    var = x_hat_logvar.exp()                 # sigma_x^2
+    loss = torch.div((x - x_hat)**2, var)    # (x - mu_x)^2 / sigma_x^2
+    loss += x_hat_logvar                     # + log sigma_x^2
+    loss = loss.sum(dim=2)                   # sum over i = 1..d_x
+    loss = loss.sum(dim=0)                   # sum over t = 1..T
+    loss = loss.mean()                       # average over the minibatch
+    return loss / seq_len                    # divide by T
+\end{verbatim}
+}
+\noindent The regularisation term, and the total:
+{\small
+\begin{verbatim}
+    kl_loss = (z_transition_logvar - z_logvar +                 # log sigma_z^2 - log sigma_phi^2 +
+               torch.div((z_logvar.exp() +                      #   ( sigma_phi^2 +
+                         (z_transition_mean - z_mean).pow(2)),  #     (mu_z - mu_phi)^2 )
+                         z_transition_logvar.exp()))            #   / sigma_z^2
+
+    kl_loss = kl_loss.sum(dim=2)             # sum over i = 1..d_z
+    kl_loss = kl_loss.sum(dim=0)             # sum over t = 1..T
+    kl_loss = kl_loss.mean()                 # average over the minibatch
+    kl_loss = kl_loss / seq_len              # divide by T
+
+    total_loss = reconstruction_loss + beta * kl_loss
+\end{verbatim}
+}
+\noindent In the comments, the subscripts \texttt{x}, \texttt{z} and
+\texttt{phi} stand for $\theta_{\mathbf{x}}$, $\theta_{\mathbf{z}}$ and
+$\phi$. Each bracket of $\mathcal{L}_{\text{rec}}$ and
+$\mathcal{L}_{\text{reg}}$ is one expression of the code, and each sum
+is one call to \code{.sum}. The factor $\frac{1}{2}$ is omitted and the
+result is divided by $T$, as noted in Section~\ref{sec:loss}.
+
 \subsection{The \texttt{predict} function}
 
 \code{predict} takes an observed sequence $\mathbf{x}_{1:T}$ and returns
