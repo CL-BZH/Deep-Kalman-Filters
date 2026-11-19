@@ -52,6 +52,7 @@ def main(args=None):
             # Provide default arguments for Jupyter Notebook
             args = argparse.Namespace(
                 dataset="lorenz",
+                sine_frequency=1.0,
                 noise_var=0.006,
                 training_config_section="PREDICTION_TRAINING",
                 learning_rate=None,
@@ -95,6 +96,10 @@ def main(args=None):
                                      "  - lorenz: The Lorenz attractor dataset.\n"
                                      "Default: lorenz")
             
+            parser.add_argument("--sine_frequency", type=float, default=1.0,
+                                help="Frequency (Hz) of the sine wave dataset.\n"
+                                     "Default: 1.0")
+
             # Noise parameters
             parser.add_argument("--noise_var", type=float, default=0.006,
                                 help="Variance of the noise added to the data.\n"
@@ -244,7 +249,8 @@ def main(args=None):
     if args.dataset == "sine":
         dataset_name = "Sine wave"
         # Generate sine wave data
-        data, _ = generate_sine_wave(frequency=1., duration=30.0, sampling_rate=40)
+        data, _ = generate_sine_wave(frequency=args.sine_frequency,
+                                     duration=30.0, sampling_rate=40)
         x_dim = 1
         l_train = 700
         l_val = 200

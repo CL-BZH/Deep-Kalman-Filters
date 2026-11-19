@@ -76,7 +76,7 @@ The project is organized as follows:
 ├── evaluate_elbo.py                # Evaluates trained models: ELBO and importance-weighted bounds
 ├── main.py                         # Main script for running the project
 ├── requirements.txt                # List of dependencies
-└── run_all.sh                      # Reproduces the Lorenz experiments of the report
+└── run_all.sh                      # Reproduces the experiments of the report
 ```
 
 ---
@@ -183,7 +183,7 @@ For more details about the models and their components, refer to the [Models/REA
 
 ### Sine Wave
 
-A simple synthetic dataset generated using `Utils.tools.generate_sine_wave()` to which Gaussian noise is added.
+A simple synthetic dataset generated using `Utils.tools.generate_sine_wave()` to which Gaussian noise is added. Its frequency is set with `--sine_frequency` (default: 1).
 
 ### Lorenz Attractor
 
@@ -232,7 +232,7 @@ This file contains configuration parameters for the models, such as the number o
 
 ### `training_conf.yaml`
 
-This file contains training hyperparameters such as learning rate, batch size, and number of epochs.
+This file contains training hyperparameters such as learning rate, batch size, number of epochs, and the weight `beta` of the KL term of the loss (`beta: 1.0` trains on the ELBO).
 
 These files are located in the `Config` directory and can be customized as needed.
 

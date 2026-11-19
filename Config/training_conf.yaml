@@ -1,9 +1,16 @@
+# beta is the weight of the regularisation (KL) term of the loss.
+# beta = 1 gives the ELBO. With beta_warmup_epochs > 0, the weight is
+# raised linearly from beta / beta_warmup_epochs to beta over the first
+# beta_warmup_epochs epochs, and kept at beta afterwards.
+
 PREDICTION_TRAINING:
   num_epochs: 120
   learning_rate: 0.001
   train_batch_size: 32
   val_batch_size: 16
   pred_batch_size: 32
+  beta: 1.0
+  beta_warmup_epochs: 20
 
 SMOOTHER_TRAINING:
   num_epochs: 50
@@ -11,3 +18,5 @@ SMOOTHER_TRAINING:
   train_batch_size: 32
   val_batch_size: 16
   pred_batch_size: 32
+  beta: 1.0
+  beta_warmup_epochs: 20

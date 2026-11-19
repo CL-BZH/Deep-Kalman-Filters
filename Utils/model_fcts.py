@@ -131,8 +131,8 @@ def model_build(model_name, config=None):
 #=========================================================================
 
 def model_train(model, optimizer, train_data_loader, val_data_loader,
-                loss_function, device, num_epochs=50, beta_decay=0.95,
-                show_plot=False):
+                loss_function, device, num_epochs=50, beta=1.0,
+                beta_warmup_epochs=0, show_plot=False):
     """
     Train the DKF model and plot the training and validation loss.
 
@@ -144,7 +144,12 @@ def model_train(model, optimizer, train_data_loader, val_data_loader,
         loss_function (function): The loss function to use.
         device (str): The device to use for training (e.g., 'cpu' or 'cuda').
         num_epochs (int): Number of epochs to train.
-        beta_decay (float): Decay factor for the beta parameter.
+        beta (float): Weight of the regularisation (KL) term of the loss.
+            With beta = 1 the loss is the negative ELBO (up to a constant
+            and a positive factor).
+        beta_warmup_epochs (int): If positive, the weight is raised
+            linearly from beta / beta_warmup_epochs to beta over the first
+            beta_warmup_epochs epochs. With 0, it is beta from the start.
 
     Returns:
         None: The function prints the training and validation loss for each
@@ -155,15 +160,23 @@ def model_train(model, optimizer, train_data_loader, val_data_loader,
                         loss_function, device, num_epochs=50)
     """
     
-    beta = 1
+    beta_target = beta
     train_losses = []  # List to store training losses
     val_losses = []    # List to store validation losses
 
-    model.train()
     for epoch in range(num_epochs):
         train_total_loss = 0
         val_total_loss = 0
-        
+
+        # Weight of the regularisation term for this epoch
+        if beta_warmup_epochs > 0:
+            beta = beta_target * min(1.0, (epoch + 1) / beta_warmup_epochs)
+        else:
+            beta = beta_target
+
+        # Back to training mode (the validation loop below sets eval mode)
+        model.train()
+
         # Declare the training description f-string
         training_desc = f"Epoch {epoch+1}/{num_epochs} (Training)"
         # Declare the validation description f-string
@@ -186,7 +199,8 @@ def model_train(model, optimizer, train_data_loader, val_data_loader,
             optimizer.step()
 
         # Calculate average training loss for the epoch
-        avg_train_loss = train_total_loss / len(train_data_loader.dataset)
+        # (each batch loss is already a mean over the batch)
+        avg_train_loss = train_total_loss / len(train_data_loader)
         train_losses.append(avg_train_loss)
         #print('----------------------------------------------')
         #print(f'Epoch {epoch+1}.\tTraining Loss:\t\t{avg_train_loss:.3f}')
@@ -207,12 +221,9 @@ def model_train(model, optimizer, train_data_loader, val_data_loader,
                 val_total_loss += val_loss.item()
 
         # Calculate average validation loss for the epoch
-        avg_val_loss = val_total_loss / len(val_data_loader.dataset)
+        avg_val_loss = val_total_loss / len(val_data_loader)
         val_losses.append(avg_val_loss)
         #print(f'\t\tValidation Loss:\t{avg_val_loss:.3f}')
-
-        # Update beta
-        beta *= beta_decay
 
     # Plot the training and validation loss curves
     sns.set(style="whitegrid")

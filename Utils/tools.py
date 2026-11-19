@@ -1023,18 +1023,22 @@ def train_model(loss_function, model_name, dataset_name, training_data_loader,
 
     # Train the model
     epochs = training_config['num_epochs'] #+ 10
-    beta_decay = 0.95
-    
+    # Weight of the regularisation (KL) term: 1 gives the ELBO
+    beta = training_config.get('beta', 1.0)
+    beta_warmup_epochs = training_config.get('beta_warmup_epochs', 0)
+
     if plot_saver != None:
         plot_saver(model_train, model, optimizer,
                    training_data_loader, val_data_loader, loss_function,'cpu',
-                   num_epochs=epochs, beta_decay=beta_decay,
+                   num_epochs=epochs, beta=beta,
+                   beta_warmup_epochs=beta_warmup_epochs,
                    show_plot=show_plot,
                    plot_name = f"training_{model_name}")
     else:
         model_train(model, optimizer, training_data_loader, val_data_loader,
-                    loss_function,'cpu', num_epochs=epochs,
-                    beta_decay=beta_decay, show_plot=show_plot)
+                    loss_function,'cpu', num_epochs=epochs, beta=beta,
+                    beta_warmup_epochs=beta_warmup_epochs,
+                    show_plot=show_plot)
 
     model_pth = get_model_pth(dataset_name, model_name)
     model.save_model(model_pth)

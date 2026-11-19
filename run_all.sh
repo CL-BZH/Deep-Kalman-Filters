@@ -1,6 +1,15 @@
 #!/bin/bash
-# 3 repetitions x 3 Lorenz datasets: train, then evaluate before the next run
-for rep in 1 2 3; do
+# Reproduces the experiments of the report.
+
+# Sine waves: vanilla DKF and AR DKF, two frequencies
+for f in 1 2; do
+  python main.py --dataset sine --sine_frequency $f \
+    --models DKF_1 AR_DKF_1 || exit 1
+done
+
+# Lorenz attractor: 4 repetitions x 3 datasets.
+# Train, then evaluate the ELBO before the next run overwrites the checkpoints.
+for rep in 1 2 3 4; do
   for r in "4500 6500" "8600 10500" "11000 13000"; do
     python main.py --dataset lorenz --lorenz_range $r \
       --train_seq_len 100 --test_seq_len 100 \
