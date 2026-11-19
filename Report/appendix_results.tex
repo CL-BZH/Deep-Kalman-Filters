@@ -37,9 +37,10 @@ forecasts the following steps.
 
 The vanilla DKF was tested on two sine-wave datasets with different
 frequencies. It follows the observed part of the sequences closely, but
-its forecasts lose track of the signal. With $f=1$ they flatten out and
-lose the amplitude; with $f=2$ they keep oscillating at roughly the right
-frequency but drift out of phase within one or two periods. The
+its forecasts lose track of the signal. With $f=1$ they stay near the
+last observed value instead of following the oscillation; with $f=2$
+they keep oscillating at roughly the right frequency but are often out
+of phase with the signal from the first predicted steps. The
 transition model alone has not learned the periodic dynamics.
 
 \begin{figure}[ht!]
@@ -118,20 +119,24 @@ transition model alone has not learned the periodic dynamics.
     The AR DKF, FAR DKF, and BAR DKF
     were compared using three sets of data from the Lorenz attractor.
     The datasets were designed to test the models' ability to
-    generalize under varying degrees of dissimilarity between training
+    generalise under varying degrees of dissimilarity between training
     and testing data. Each experiment was repeated four times with the
     same settings; the figures below show the first run.
     
     \subsubsection*{Configurations}
-    All the subsequent results are obtained with configurations
-    given in the tables below.\\
+    All the subsequent results are obtained with the configurations
+    given in the tables below. In addition, the weight $\beta$ of the
+    regularisation term in the loss (Section~\ref{sec:loss}) is not kept
+    at 1: it starts at 1 and is multiplied by 0.95 after every epoch
+    (\code{beta\_decay} in \code{Utils/tools.py}), which brings it to
+    about 0.002 at the end of the 120 epochs.\\
     
     %- - - - - - - - - - - - - - - - - - - - - - - - - - - - 
     \begin{minipage}{0.48\textwidth}
         \centering
         \small
-        \label{tab:args_config}
         \captionof{table}{Args Configuration}
+        \label{tab:args_config}
         \begin{tabular}{|l|l|}
         \hline
         \textbf{Parameter} & \textbf{Value} \\ \hline
@@ -152,8 +157,8 @@ transition model alone has not learned the periodic dynamics.
     \hfill
     \begin{minipage}{0.45\textwidth}
         \centering
-            \label{tab:training_config_config}
             \captionof{table}{Training Configuration}
+            \label{tab:training_config_config}
             \begin{tabular}{|l|l|}
             \hline
             \textbf{Parameter} & \textbf{Value} \\ \hline
@@ -207,7 +212,7 @@ transition model alone has not learned the periodic dynamics.
     \subsubsection*{Dataset 1}
     
     The dataset (\textit{before the addition of Gaussian noise}) is shown
-    in the figure \ref{fig:dataset_1_partial_data} below.\\
+    in Figure~\ref{fig:dataset_1_partial_data} below.\\
     
     \begin{figure}[ht!]
         \centering
@@ -219,7 +224,7 @@ transition model alone has not learned the periodic dynamics.
     %
     \FloatBarrier
     
-    Figure \ref{fig:dataset_1_AR_DKF_1_all_dims} below shows the results
+    Figure~\ref{fig:dataset_1_AR_DKF_1_all_dims} below shows the results
     of the AR DKF model for four sequences from the dataset in
     each dimension.
     
@@ -250,7 +255,7 @@ transition model alone has not learned the periodic dynamics.
         \label{fig:dataset_1_AR_DKF_1_all_dims}
     \end{figure}
     
-    Figure \ref{fig:dataset_1_FAR_DKF_1_all_dims} below shows the results
+    Figure~\ref{fig:dataset_1_FAR_DKF_1_all_dims} below shows the results
     of the FAR DKF model on the same sequences.
     
     \begin{figure}[ht!]
@@ -280,7 +285,7 @@ transition model alone has not learned the periodic dynamics.
         \label{fig:dataset_1_FAR_DKF_1_all_dims}
     \end{figure}
     
-    And Figure \ref{fig:dataset_1_BAR_DKF_1_all_dims} shows the results
+    And Figure~\ref{fig:dataset_1_BAR_DKF_1_all_dims} shows the results
     of the BAR DKF.
     
     \begin{figure}[ht!]
@@ -312,8 +317,8 @@ transition model alone has not learned the periodic dynamics.
     
     \FloatBarrier
     
-    Figure \ref{fig:dataset_1_mse_comparison} below shows a
-    comparison of the Mean Square Error for the reconstruction
+    Figure~\ref{fig:dataset_1_mse_comparison} below shows a
+    comparison of the mean squared error (MSE) for the reconstruction
     and the prediction tasks for each model. The MSE of the noise
     is plotted for reference.\\
     The three models have prediction errors of the same order: 0.0269
@@ -332,8 +337,8 @@ transition model alone has not learned the periodic dynamics.
         \label{fig:dataset_1_mse_comparison}
     \end{figure}
     
-    Figure \ref{fig:dataset_1_mse_pred_comparison} below shows a
-    comparison of the Mean Square Error for each predicted point
+    Figure~\ref{fig:dataset_1_mse_pred_comparison} below shows a
+    comparison of the MSE for each predicted point
     for each model.\\
     As expected, the error grows with the forecasting horizon, since
     errors accumulate along the sampled path.
@@ -343,19 +348,19 @@ transition model alone has not learned the periodic dynamics.
         \includegraphics[width=1\textwidth]
         {./Images/Dataset_1/mse_pred_comparison.png}
         \caption{MSE Comparison for AR DKF, FAR DKF, and
-        BAR DKF for each prediction points of test sequences of
+        BAR DKF for each predicted point of the test sequences of
         dataset 1.}
         \label{fig:dataset_1_mse_pred_comparison}
     \end{figure}
     %
     \FloatBarrier
-    The same comparisons were done on the dataset 2 and 3.
+    The same comparisons were done on datasets 2 and 3.
     The results are shown below.
     %- - - - - - - - - - - - - - - - - - - - - - - - - - - - 
     \subsubsection*{Dataset 2}
     
     The dataset (\textit{before the addition of Gaussian noise}) is shown
-    in figure \ref{fig:dataset_2_partial_data}.
+    in Figure~\ref{fig:dataset_2_partial_data}.
     
     \begin{figure}[ht!]
         \centering
@@ -461,7 +466,7 @@ transition model alone has not learned the periodic dynamics.
         \includegraphics[width=1\textwidth]
         {./Images/Dataset_2/mse_pred_comparison.png}
         \caption{MSE Comparison for AR DKF, FAR DKF, and
-        BAR DKF for each prediction points of test sequences of
+        BAR DKF for each predicted point of the test sequences of
         dataset 2.}
         \label{fig:dataset_2_mse_pred_comparison}
     \end{figure}
@@ -470,7 +475,7 @@ transition model alone has not learned the periodic dynamics.
     \subsubsection*{Dataset 3}
     
     The dataset (\textit{before the addition of Gaussian noise}) is shown
-    in figure \ref{fig:dataset_3_partial_data} below.\\
+    in Figure~\ref{fig:dataset_3_partial_data} below.\\
     
     \begin{figure}[ht!]
         \centering
@@ -576,7 +581,7 @@ transition model alone has not learned the periodic dynamics.
         \includegraphics[width=1\textwidth]
         {./Images/Dataset_3/mse_pred_comparison.png}
         \caption{MSE Comparison for AR DKF, FAR DKF, and
-        BAR DKF for each prediction points of test sequences of
+        BAR DKF for each predicted point of the test sequences of
         dataset 3.}
         \label{fig:dataset_3_mse_pred_comparison}
     \end{figure}
@@ -587,8 +592,9 @@ transition model alone has not learned the periodic dynamics.
 
 The code does not fix a random seed, so each training run starts from
 a different initialisation and sees the minibatches in a different
-order. Table~\ref{tab:lorenz_mse} gives the forecasting and
-reconstruction errors over the four runs of each experiment.
+order. Table~\ref{tab:lorenz_mse} gives the forecasting errors over the
+four runs of each experiment; the reconstruction errors are summarised
+below it.
 
 \begin{table}[ht!]
 \centering
@@ -622,8 +628,8 @@ The MSE of the noise is 0.0060.}
     model is as large as the differences between models, and no model is
     consistently best: the AR DKF has the lowest error in three runs out
     of four on dataset 2, the FAR DKF the lowest mean error on dataset 3,
-    and on dataset 1 the three means are within one standard deviation of
-    each other. The BAR DKF has one poor run on dataset 2 (0.166), which
+    and on dataset 1 the three means differ by less than 0.008, while the
+    standard deviations range from 0.004 to 0.020. The BAR DKF has one poor run on dataset 2 (0.166), which
     drives its mean and spread there. Dataset 3 remains the hardest for
     all models.
 \end{itemize}
@@ -641,8 +647,8 @@ To test this, the script \code{evaluate\_elbo.py} evaluates each trained
 model on the noisy test sequences (the same noise for all models) with
 two quantities, reported per time step:
 \begin{itemize}
-    \item the ELBO, estimated as during training and averaged over 20
-    trajectories per sequence;
+    \item the ELBO, estimated as in Section~\ref{sec:approximation_elbo}
+    (with $\beta = 1$) and averaged over 20 trajectories per sequence;
     \item the importance-weighted bound \cite{burda2016importance}
     \begin{equation*}
         \mathcal{L}_K = \E\left[\log \frac{1}{K} \sum_{k=1}^{K}
@@ -659,7 +665,10 @@ two quantities, reported per time step:
 As a check of the implementation, $\mathcal{L}_1$ agrees with the ELBO
 within its confidence interval in every evaluation, and $\mathcal{L}_K$
 increases with $K$. The ELBO was evaluated after each of the last three
-runs of every dataset (and after the first run for dataset 3).
+runs of every dataset (and after the first run for dataset 3). Because
+$\beta$ decays during training (see \enquote{Configurations} above), the
+ELBO evaluated here is not the objective the models were trained on: in
+the training loss, the regularisation term had a much smaller weight.
 
 \begin{table}[ht!]
 \centering
@@ -670,13 +679,13 @@ Dataset & Model & ELBO: mean (std.\ dev.) &
 Gap $\mathcal{L}_{100} - \mathcal{L}$: mean [min, max] \\
 \hline
 1 & AR DKF  & $-13.8$ (7.5)  & 0.62 [0.58, 0.69] \\
-  & FAR DKF & $-23.4$ (8.6)  & 0.65 [0.60, 0.68] \\
+  & FAR DKF & $-23.3$ (8.6)  & 0.65 [0.60, 0.68] \\
   & BAR DKF & $-17.2$ (13.1) & 0.63 [0.56, 0.73] \\ \hline
 2 & AR DKF  & $-30.8$ (0.8)  & 0.69 [0.66, 0.70] \\
   & FAR DKF & $-22.9$ (4.7)  & 0.64 [0.62, 0.67] \\
   & BAR DKF & $-25.4$ (12.5) & 0.63 [0.53, 0.69] \\ \hline
 3 & AR DKF  & $-41.3$ (8.5)  & 0.80 [0.72, 0.95] \\
-  & FAR DKF & $-38.8$ (7.8)  & 0.81 [0.72, 0.95] \\
+  & FAR DKF & $-38.8$ (7.8)  & 0.80 [0.72, 0.95] \\
   & BAR DKF & $-37.5$ (7.4)  & 0.75 [0.73, 0.79] \\ \hline
 \end{tabular}
 \caption{Lorenz experiments: ELBO and estimated ELBO gap on the test
@@ -688,13 +697,14 @@ three runs (four for dataset 3); gap over three runs.}
 \begin{itemize}
     \item \textbf{The ELBO varies more between runs than between
     models.} Its standard deviation over runs of the same model is
-    mostly between 5 and 13 nats per time step, while the differences between the means
+    between 4.7 and 13.1 nats per time step in eight cases out of nine
+    (0.8 for the AR DKF on dataset 2), while the differences between the means
     of the three models are of the same size or smaller, and the model
     with the best ELBO changes from one run to the next. The AR DKF has
     the lowest mean ELBO on dataset 2 (the lowest in two runs out of
     three), yet the lowest forecasting error there: the ELBO and the
     forecasting error measure different things.
-    \item \textbf{The estimated gap is the same for the three models}, at
+    \item \textbf{The estimated gap is similar for the three models}, at
     about 0.6--0.8 nats per time step. With $K = 100$, the
     importance-weighted bound cannot detect the difference that the theory
     predicts. The bound is still rising between $K = 10$ and $K = 100$
@@ -706,5 +716,5 @@ three runs (four for dataset 3); gap over three runs.}
 \noindent In short, the experiments do not show the advantage of the
 FAR DKF and the BAR DKF that the d-separation argument suggests. What
 they show clearly is that, at this scale, the variability between
-training runs is larger than the differences between the three
+training runs is at least as large as the differences between the three
 inference networks.

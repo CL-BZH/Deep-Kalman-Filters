@@ -78,8 +78,9 @@ contains that of the posterior,
        \mathbf{x})}\right] \;=:\; \mathcal{L}(\theta, \phi; \mathbf{x}),
 \end{align*}
 by Jensen's inequality, since $\log$ is concave. This is the
-\textbf{Evidence Lower Bound} (ELBO). The size of the gap is known
-exactly. Writing
+\textbf{Evidence Lower Bound} (ELBO); the notation
+$\mathcal{L}(\theta, \phi; \mathbf{x})$ is for $q = q_\phi$, the case
+used from now on. The size of the gap is known exactly. Writing
 $p_\theta(\mathbf{x}, \mathbf{z}) = p_\theta(\mathbf{x})\,
 p_\theta(\mathbf{z} \mid \mathbf{x})$ inside the logarithm gives
 \begin{equation}
@@ -93,8 +94,9 @@ p_\theta(\mathbf{z} \mid \mathbf{x})$ inside the logarithm gives
 The ELBO is below the log-likelihood by exactly the KL divergence
 between the encoder and the true posterior. Maximising the ELBO over
 $\phi$ therefore makes the encoder a better approximation of the
-posterior. Maximising it over $\theta$ pushes the log-likelihood up.
-The bound is tight when the encoder equals the posterior.
+posterior. Maximising it over $\theta$ raises a lower bound on the
+log-likelihood. The bound is tight when the encoder equals the
+posterior.
 \end{inwords}
 
 \subsection{Reconstruction and regularisation terms}
@@ -125,10 +127,10 @@ usual form
 The VAE is trained by minimising $-\mathcal{L}$, averaged over the
 dataset, with stochastic gradient descent or one of its variants. The
 expectation in the reconstruction term is estimated with one (or a few)
-samples $\mathbf{z} \sim q_\phi(\mathbf{z} \mid \mathbf{x})$. Since a
-Monte Carlo average of samples from $q_\phi$ is an unbiased estimate of
-the expectation, the gradient of the estimate is an unbiased estimate of
-the gradient, provided the sample can be differentiated with respect to
+samples $\mathbf{z} \sim q_\phi(\mathbf{z} \mid \mathbf{x})$. A Monte
+Carlo average over samples from $q_\phi$ is an unbiased estimate of the
+expectation, and its gradient is an unbiased estimate of the gradient of
+the expectation, provided the samples are differentiable functions of
 $\phi$.
 
 \subsection{Reparameterisation trick}

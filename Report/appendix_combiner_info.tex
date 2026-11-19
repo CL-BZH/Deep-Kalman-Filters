@@ -30,8 +30,8 @@ The Combiner's primary role is to:
         \begin{itemize}
             \item The latent state from the previous time step, which 
             represents the hidden variables of the model.\\
-            At $t=1$, $\bm{z}_0$ is either a fix tensor of zeros or a learnable
-            parameter initialiazed with zeros.
+            At $t=1$, $\bm{z}_0$ is either a fixed tensor of zeros or a learnable
+            parameter initialised with zeros.
         \end{itemize}
     \item \textbf{RNN Hidden States ($\bm{h}_{t}^{i}$)}:
         \begin{itemize}
@@ -61,19 +61,19 @@ The Combiner is implemented in two main ways:
 
 The \textbf{Linear Combiner} performs a weighted sum of the previous 
 latent state ($\bm{z}_{t-1}$) and the RNN hidden states. 
-The weights are controlled by a parameter $\alpha_i$, which determines 
+The weights are controlled by a parameter $\alpha^i$, which determines 
 the contribution of each input.
 
 \subsubsection*{Key Parameters}
 \begin{itemize}
-    \item \code{$z\_dim$}: Dimension of the latent state ($\bm{z}_{t-1}$).
-    \item \code{$rnn\_dims$}: Dimensions of the RNN hidden states. 
+    \item \code{z\_dim}: Dimension of the latent state ($\bm{z}_{t-1}$).
+    \item \code{rnn\_dims}: Dimensions of the RNN hidden states. 
     This can be a single dimension or a list of dimensions if multiple 
     RNNs are used.
-    \item \code{$output\_dim$}: Dimension of the output tensor.
-    \item \code{$\alpha^i$}: Weight for the $i$-th RNN hidden state. 
-    This determines how much influence the mapped $\bm{z}_{t-1}$ has on 
-    the combination.
+    \item \code{output\_dim}: Dimension of the output tensor.
+    \item $\alpha^i$: Weight of the mapped $\bm{z}_{t-1}$ in its
+    combination with the $i$-th RNN hidden state, which has weight
+    $1 - \alpha^i$.
 \end{itemize}
 
 \subsubsection*{Formula}
@@ -94,12 +94,12 @@ Where:
     at time $t$.
 \end{itemize}
 
-With a single RNN and $\alpha = 0.5$, this is the combiner of Krishnan
-et al.'s follow-up work \cite{krishnan2017structured},
+With a single RNN and $\alpha = 0.5$, this gives
 $\frac{1}{2}\big(\tanh(\mathbf{W}\bm{z}_{t-1} + \mathbf{c}) +
-\bm{h}_t\big)$, followed by a linear layer.
+\bm{h}_t\big)$ followed by a linear layer, which is the combiner of
+Krishnan et al.'s follow-up work \cite{krishnan2017structured}.
 
-Two sets of weights are kept: \code{alpha\_init}, meant for the first
+Two sets of weights are kept: \code{alpha\_init}, used for the first
 time step, where $\bm{z}_{0}$ is a fixed or learned constant that carries
 no information about the sequence, and \code{alpha}, used for the
 following steps.
@@ -152,9 +152,9 @@ The formula becomes:
 This means:
 \begin{itemize}
     \item 30\% of the contribution comes from the mapped latent state 
-    $\text{mapped}$.
+    $\bm{mz}$.
     \item 70\% of the contribution comes from the RNN hidden state 
-    \code{rnn\_h}.
+    $\bm{rnn\_h}$.
 \end{itemize}
 
 \subsection{MLP Combiner}
@@ -199,11 +199,11 @@ This allows for more complex interactions between the inputs.
         \end{itemize}
 \end{enumerate}
 
-\subsubsection{Example}
+\subsubsection*{Example}
 Suppose:
 \begin{itemize}
     \item $\bm{z}_{t-1}$ has a dimension of 16.
-    \item Two RNN hidden states: $h^1_t$ (dimension 32) and $h^2_t$ (dimension 64).
+    \item Two RNN hidden states: $\bm{h}^1_t$ (dimension 32) and $\bm{h}^2_t$ (dimension 64).
 \end{itemize}
 %
 The concatenated input will have a dimension of \(16 + 32 + 64 = 112\).
@@ -212,25 +212,25 @@ This concatenated tensor is passed through an MLP.
 \subsection{Combiner Factory}
 
 The \textbf{Combiner Factory} is a utility class that creates the
-appropriate Combiner based on the specified type ($\text{linear}$ or
-$\text{mlp}$). This allows for flexibility in choosing the combination
+appropriate Combiner based on the specified type (\code{linear} or
+\code{mlp}). This allows for flexibility in choosing the combination
 strategy.
 
 \subsubsection*{Key Parameters}
 
 \begin{itemize}
     \item \code{combiner\_type}: Type of Combiner to use 
-    (\text{linear} or \text{mlp}).
+    (\code{linear} or \code{mlp}).
     \item \textbf{Other Parameters}: Depend on the type of Combiner 
-    (e.g., \code{$\alpha^i$}, \code{layers\_dim}).
+    (e.g., \code{alpha}, \code{layers\_dim}).
 \end{itemize}
 
 \subsubsection*{How It Works}
 
 \begin{itemize}
     \item If \code{combiner\_type} = \code{linear}, the factory 
-    initializes a \code{DKF\_CombinerLinear} with the specified parameters.
-    \item If \code{combiner\_type} = \code{mlp}, the factory initializes 
+    initialises a \code{DKF\_CombinerLinear} with the specified parameters.
+    \item If \code{combiner\_type} = \code{mlp}, the factory initialises 
     a \code{DKF\_CombinerMLP} with the specified parameters.
 \end{itemize}
 \subsection{Summary of the Combiner's Role in the DKF}

@@ -3,10 +3,10 @@
 The Deep Kalman Filter keeps the probabilistic structure of the Kalman
 filter, a Markov chain of latent states with one emission per time step,
 and makes the transition and emission non-linear with neural networks.
-Exact inference is then impossible, and the model is trained like a VAE,
+Exact inference is then intractable, and the model is trained like a VAE,
 by maximising a lower bound on the log-likelihood.\\
 
-Three points that the original paper leaves implicit are central to
+Three points that the original paper states only briefly are central to
 understanding the method:
 \begin{itemize}
     \item \textbf{The structure of the inference network follows from
@@ -14,8 +14,8 @@ understanding the method:
     $\mathbf{z}_t$ depends only on the future observations
     $\mathbf{x}_{t:T}$, which is why the inference network combines
     $\mathbf{z}_{t-1}$ with a backward RNN.
-    \item \textbf{The ELBO splits into one KL per time step}, by the
-    chain rule of the KL divergence. Each of these is between two
+    \item \textbf{The regularisation term of the ELBO splits into one KL
+    per time step}, by the chain rule of the KL divergence. Each of these is between two
     Gaussians given $\mathbf{z}_{t-1}$ and has a closed form.
     \item \textbf{One sampled trajectory gives an unbiased estimate of
     the ELBO.} The ELBO is linear in its expectations under the
@@ -33,8 +33,8 @@ both, is therefore the principled inference model for the AR DKF
 generative model. On the Lorenz data, however, the three autoregressive
 variants perform comparably: over four training runs per experiment,
 neither the forecasting errors nor the ELBOs on test data rank them
-consistently, and the variability between runs is larger than the
-differences between models.\\
+consistently, and the variability between runs is at least as large as
+the differences between models.\\
 
 Several directions remain open. The variability between training runs
 should be reduced, or at least controlled with fixed random seeds and

@@ -1,4 +1,4 @@
-\section{Detailed Mathematical Development of the Regularization Term}
+\section{Detailed Mathematical Development of the Regularisation Term}
 \label{sec:elbo_regularization}
 (Computation is done here without the control input term $\bm{u}$.)
 %
@@ -35,9 +35,9 @@ We aim to compute:
     \sum_{t=1}^T 
     \KL
     \big(
-    q_\phi(z_t | z_{t-1}, x_{t:T})
+    q_\phi(\bm{z}_t | \bm{z}_{t-1}, \bm{x}_{t:T})
     \parallel
-    p_\theta(z_t | z_{t-1})
+    p_\theta(\bm{z}_t | \bm{z}_{t-1})
     \big)
 \end{equation*}
 
@@ -51,7 +51,7 @@ $ \mathcal{N}(\bm{z}; \bm{\mu}_2, \Sigma_2) $ is given by:
 \KL \big( \mathcal{N}(\bm{z}; \bm{\mu}_1, \Sigma_1) 
 \parallel \mathcal{N}(\bm{z}; \bm{\mu}_2, \Sigma_2) \big) = 
 \frac{1}{2} \left( \text{tr}(\Sigma_2^{-1} \Sigma_1) + 
-(\bm{\mu}_2 - \bm{\mu}_1)^T \Sigma_2^{-1} (\bm{\mu}_2 - \bm{\mu}_1) 
+(\bm{\mu}_2 - \bm{\mu}_1)^\top \Sigma_2^{-1} (\bm{\mu}_2 - \bm{\mu}_1) 
 - k + \log \frac{|\Sigma_2|}{|\Sigma_1|} \right)
 \end{equation*}
 
@@ -60,7 +60,7 @@ where $k$ is the dimensionality of the Gaussian distributions.
 \subsection*{Simplification for Diagonal Covariance Matrices}
 
 Since both $q_\phi$ and $p_\theta$ are diagonal Gaussian distributions,
-their covariance matrices are diagonal. Let's denote:
+their covariance matrices are diagonal. Let us write:
 
 \begin{equation*}
 \Sigma_{\phi} = \text{diag}\big(\sigma^2_{\phi}(\bm{z}_{t-1}, 
@@ -122,6 +122,6 @@ Summing over all time steps $t = 1, \dots, T$:
 is evaluated at the sampled previous state $\dot{\bm{z}}_{t-1}$, both in
 the parameters of $q_\phi$ and in those of $p_{\theta_{\bm{z}}}$. The
 term $-1$ inside the sum contributes the constant $-\frac{T d_z}{2}$,
-where $d_z$ is the dimension of $\bm{z}_t$. It does not depend on the
+where $d_z = k$ is the dimension of $\bm{z}_t$. It does not depend on the
 parameters, which is why it can be dropped from the loss
 (Section~\ref{sec:loss}).

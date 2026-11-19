@@ -130,9 +130,10 @@ variational models:
 None of these conditions on the previous latent state: the latent
 states are independent given the observations. Such \emph{mean-field}
 approximations cannot represent the strong correlation between
-successive states of the true posterior. The same paper, however, writes
-the posterior in its structured form (its Equation~3), and the authors'
-follow-up work \cite{krishnan2017structured} builds an inference network
+successive states of the true posterior. The same paper, however, gives
+the structured form of the true posterior (its Theorem~5.1) and writes
+the variational distribution in that form (its Equation~3), and the
+authors' follow-up work \cite{krishnan2017structured} builds an inference network
 of exactly that form, with a \enquote{combiner} that merges
 $\mathbf{z}_{t-1}$ with an RNN summary of the observations. My
 implementation follows the structured form, derived next.
@@ -234,8 +235,9 @@ $\mathbf{z}_0$ is fixed.
 \begin{inwords}
 The KL divergence between two distributions over whole trajectories
 splits into one KL per time step: this is the \emph{chain rule} of the
-KL divergence, and it holds because both the model and the inference
-network are Markov chains. Each per-step KL compares two Gaussians for
+KL divergence. Because both the model and the inference network are
+Markov chains, the KL for time $t$ depends on the past only through
+$\mathbf{z}_{t-1}$. Each per-step KL compares two Gaussians for
 $\mathbf{z}_t$ \emph{given} $\mathbf{z}_{t-1}$, so it has a closed form,
 however complicated the neural networks are. The price is the outer
 expectation over $\mathbf{z}_{t-1}$, which Section~\ref{sec:approximation_elbo}
@@ -560,7 +562,10 @@ $\frac12$ is omitted and the result is divided by the sequence length.
 Neither changes the minimiser. With $\beta = 1$ this is exactly the
 negative ELBO estimate \eqref{eq:elbo_estimator}, up to a constant and a
 positive factor. With $\beta \neq 1$ the objective is a weighted
-($\beta$-VAE-style) variant. The option \code{loss\_type='mse'} drops the
+($\beta$-VAE-style) variant. In the experiments of
+Appendix~\ref{sec:results}, $\beta$ starts at 1 and is multiplied by
+0.95 after every epoch, so the weight of the regularisation term
+decreases during training. The option \code{loss\_type='mse'} drops the
 decoder variance, so its reconstruction term is no longer a
 log-likelihood and the objective is no longer an ELBO.
 \end{story}
@@ -678,7 +683,8 @@ edges from the past observations to $\mathbf{z}_t$
         \subcaption{AR DKF model}
         \label{fig:ar_dkf_transition_model}
     \end{minipage}
-    \caption{DKF model versus AR DKF model (blue: the added edges).}
+    \caption{DKF model versus AR DKF model (blue: the edges of the
+    transition model).}
     \label{fig:ar_dkf_transition_versus_dkf_transition}
 \end{figure}
 
@@ -734,8 +740,9 @@ such a path is blocked too.
 \emph{Past observations do not drop out.} For $t \geq 2$,
 $\mathbf{x}_{t-1}$ is a \emph{parent} of $\mathbf{z}_t$: the edge
 $\mathbf{x}_{t-1} \to \mathbf{z}_t$ is a path of length one, with no
-intermediate node that could block it. Hence no conditioning set can
-make $\mathbf{z}_t$ independent of $\mathbf{x}_{t-1}$.
+intermediate node that could block it. Hence no conditioning set
+d-separates $\mathbf{z}_t$ from $\mathbf{x}_{t-1}$, and in general they
+remain dependent whatever else is given.
 \end{proof}
 
 \begin{inwords}
@@ -750,9 +757,9 @@ the past observations as well as the future ones.
 The AR DKF as implemented keeps the inference network of the vanilla
 DKF, $q_\phi(\mathbf{z}_t \mid \mathbf{z}_{t-1}, \mathbf{x}_{t:T})$,
 which ignores $\mathbf{x}_{1:t-1}$. By Proposition~\ref{prop:ar_posterior}
-it cannot represent the true posterior, even with unlimited capacity, so
-the gap $\KL(q_\phi \,\|\, p_\theta(\cdot \mid \mathbf{x}))$ in the ELBO
-can never close. The variants of the next section repair this.
+it cannot in general represent the true posterior, even with unlimited
+capacity, so the gap $\KL(q_\phi \,\|\, p_\theta(\cdot \mid \mathbf{x}))$
+in the ELBO cannot be closed. The variants of the next section repair this.
 
 \subsection{Prediction}
 
@@ -848,7 +855,7 @@ On the Lorenz data, over four training runs per experiment, the three
 variants reconstruct the observations equally well, and none of them
 forecasts consistently better than the others. Their ELBOs on test data
 vary more between runs of the same model than between models, and the
-estimated ELBO gaps are the same for the three variants
+estimated ELBO gaps are similar for the three variants
 (Appendix~\ref{sec:results}). The advantage that
 Proposition~\ref{prop:ar_posterior} suggests for the FAR DKF and the BAR
 DKF is therefore not visible in these experiments.

@@ -11,11 +11,11 @@ Given the probability distribution:
 \end{equation*}
 
 where $\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}) = 
-diag(\sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}))$,
+\mathrm{diag}(\sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}))$,
 we aim to develop the expression:
 
 \begin{equation*}
-    \sum_{t=1}^T \Big[ \log p_\theta(x_t | z_{t}) \Big]
+    \sum_{t=1}^T \log p_{\theta_{\bm{x}}}(\bm{x}_t | \bm{z}_{t})
 \end{equation*}
 
 \subsection*{Logarithm of the Probability Distribution}
@@ -57,7 +57,7 @@ Taking the logarithm, we get:
 \subsection*{Simplify the Logarithm Expression}
 Given that 
 \(\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}) = 
-diag(\sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}))\), we have:
+\mathrm{diag}(\sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t}))\), we have:
 \begin{equation*}
     \log |\Sigma^2_{\theta_{\bm{x}}}(\bm{z}_{t})| = 
     \log \prod_{i=1}^d \sigma^2_{\theta_{\bm{x}}, i}(\bm{z}_{t}) = 
@@ -114,5 +114,6 @@ Now, we sum over all time steps \(t\) from 1 to \(T\):
 \end{equation}
 \noindent In the estimator \eqref{eq:elbo_estimator}, this expression is
 evaluated at the sampled latent states $\dot{\bm{z}}_{1:T}$. The first
-term, $-\frac{Td}{2}\log(2\pi)$, does not depend on the parameters and is
-dropped from the loss (Section~\ref{sec:loss}).
+term, $-\frac{Td}{2}\log(2\pi)$ (with $d = d_x$ in the notation of the
+main text), does not depend on the parameters and is dropped from the
+loss (Section~\ref{sec:loss}).
