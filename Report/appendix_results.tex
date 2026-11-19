@@ -14,34 +14,34 @@ forecasts the following steps.
     the ground truth \emph{before} noise was added. The \enquote{MSE of
     the noise} is the error one would make by simply returning the noisy
     input.
-    \item \textbf{Reconstruction at the noise level means no
-    denoising.} For all the models, the reconstruction MSE is close to
-    the MSE of the noise. In the figures, the
-    reconstruction follows the noisy input point by point rather than the
-    clean curve. The inference network passes each observation, noise
-    included, through the latent state, and the decoder reproduces it.
-    A good reconstruction MSE is therefore \emph{not} evidence that the
-    model has learned the dynamics; the forecasting error is the
-    informative quantity.
+    \item \textbf{Compare the reconstruction MSE with the MSE of the
+    noise.} Below it, the reconstruction is closer to the clean signal
+    than the noisy input is: the model denoises. Above it, the model does
+    worse than simply returning its input. The reconstruction comes from
+    the inference network, which sees the whole observed sequence,
+    whereas a forecast relies on the transition model alone. A good
+    reconstruction MSE is therefore \emph{not} evidence that the model
+    has learned the dynamics; the forecasting error is the informative
+    quantity.
     \item \textbf{Forecasts are single sampled paths.} \code{predict}
     samples one latent trajectory and one path of the dynamics. Its error
     includes sampling noise and would be lower for the mean of the
     predictive distribution.
-    \item \textbf{Repeated runs.} Each Lorenz experiment was trained
-    four times. The figures of each dataset show the first run; the
-    summary at the end of this appendix gives the mean and the spread
-    over the four runs. The sine-wave experiments were trained once.
+    \item \textbf{Repeated runs.} Each experiment was trained four
+    times. The figures show the first run. For the sine waves, the text
+    gives the mean over the four runs; for the Lorenz data, the summary
+    at the end of this appendix gives the mean and the spread.
 \end{itemize}
 
 \subsection*{DKF with Simple Sine Waves}
 
 The vanilla DKF was tested on two sine-wave datasets with different
-frequencies. It follows the observed part of the sequences closely, but
-its forecasts lose track of the signal. With $f=1$ they stay near the
-last observed value instead of following the oscillation; with $f=2$
-they keep oscillating at roughly the right frequency but are often out
-of phase with the signal from the first predicted steps. The
-transition model alone has not learned the periodic dynamics.
+frequencies. It denoises the observed part of the sequences: its
+reconstruction MSE is below the MSE of the noise in every run. Its
+forecasts oscillate with the right amplitude and roughly the right
+frequency, but they drift out of phase with the signal over the 30
+predicted steps. The transition model alone has learned the periodic
+dynamics only approximately.
 
 \begin{figure}[ht!]
     \centering
@@ -65,17 +65,16 @@ transition model alone has not learned the periodic dynamics.
     
     The AR DKF was tested on the same sine wave datasets as
     for the DKF.
-    The AR DKF forecasts both sine waves far better than the vanilla DKF:
+    The AR DKF forecasts both sine waves better than the vanilla DKF:
     the forecasts keep the phase, the frequency and the amplitude of the
-    signal over the whole prediction window. The prediction MSE is
-    $0.876$ for the DKF and $0.0052$ for the AR DKF with $f=1$, and
-    $0.571$ and $0.0094$ with $f=2$ (Figure~\ref{fig:sine_mse_comparison}).
-    For a sine wave of amplitude 1, always predicting $0$ would give an MSE
-    of $0.5$: on both datasets the DKF forecasts are worse than this
-    trivial predictor, while the AR DKF forecasts have an error of the
-    same order as the noise of the observations.
-    The difference is large enough to be conclusive even with a single
-    run. It supports the idea behind the AR DKF: giving the transition
+    signal over the whole prediction window. Over the four runs, the
+    mean prediction MSE is $0.0390$ for the DKF and $0.0041$ for the AR
+    DKF with $f=1$, and $0.0226$ and $0.0051$ with $f=2$
+    (Figure~\ref{fig:sine_mse_comparison} shows the first run).
+    The AR DKF has the lower error in every run, by a factor between 2.5
+    and 11, and its forecasting error is below the MSE of the noise of
+    the observations ($0.006$).
+    The result supports the idea behind the AR DKF: giving the transition
     model direct access to the history lets it carry the information
     needed for forecasting.
     
@@ -125,11 +124,11 @@ transition model alone has not learned the periodic dynamics.
     
     \subsubsection*{Configurations}
     All the subsequent results are obtained with the configurations
-    given in the tables below. In addition, the weight $\beta$ of the
-    regularisation term in the loss (Section~\ref{sec:loss}) is not kept
-    at 1: it starts at 1 and is multiplied by 0.95 after every epoch
-    (\code{beta\_decay} in \code{Utils/tools.py}), which brings it to
-    about 0.002 at the end of the 120 epochs.\\
+    given in the tables below. The weight \code{beta} of the
+    regularisation term is raised linearly to 1 over the first
+    \code{beta\_warmup\_epochs} epochs; for the remaining 100 epochs
+    the training loss is the negative ELBO estimate of
+    Section~\ref{sec:loss}.\\
     
     %- - - - - - - - - - - - - - - - - - - - - - - - - - - - 
     \begin{minipage}{0.48\textwidth}
@@ -162,6 +161,8 @@ transition model alone has not learned the periodic dynamics.
             \begin{tabular}{|l|l|}
             \hline
             \textbf{Parameter} & \textbf{Value} \\ \hline
+            beta & 1.0 \\ \hline
+            beta\_warmup\_epochs & 20 \\ \hline
             learning\_rate & 0.001 \\ \hline
             num\_epochs & 120 \\ \hline
             pred\_batch\_size & 32 \\ \hline
@@ -321,11 +322,10 @@ transition model alone has not learned the periodic dynamics.
     comparison of the mean squared error (MSE) for the reconstruction
     and the prediction tasks for each model. The MSE of the noise
     is plotted for reference.\\
-    The three models have prediction errors of the same order: 0.0269
-    for the AR DKF, 0.0309 for the FAR DKF and 0.0218 for the BAR DKF.
-    The AR DKF and the BAR DKF reconstruct at the noise level. The FAR DKF
-    reconstruction error (0.0092) is above it, i.e.\ worse than simply
-    returning the noisy input.
+    The three models have prediction errors of the same order: 0.0184
+    for the AR DKF, 0.0234 for the FAR DKF and 0.0319 for the BAR DKF.
+    The three reconstruction errors (0.0050, 0.0041 and 0.0039) are below
+    the MSE of the noise (0.0060): the models denoise the observations.
     
     \begin{figure}[ht!]
         \centering
@@ -603,15 +603,15 @@ below it.
 \hline
 Dataset & Model & Prediction MSE: mean (std.\ dev.) &
 Runs with the lowest error \\ \hline
-1 & AR DKF  & 0.0357 (0.0202) & 2 of 4 \\
-  & FAR DKF & 0.0315 (0.0063) & 1 of 4 \\
-  & BAR DKF & 0.0280 (0.0044) & 1 of 4 \\ \hline
-2 & AR DKF  & 0.0244 (0.0135) & 3 of 4 \\
-  & FAR DKF & 0.0361 (0.0232) & 1 of 4 \\
-  & BAR DKF & 0.0621 (0.0695) & 0 of 4 \\ \hline
-3 & AR DKF  & 0.1974 (0.0283) & 1 of 4 \\
-  & FAR DKF & 0.1418 (0.0513) & 2 of 4 \\
-  & BAR DKF & 0.1711 (0.0597) & 1 of 4 \\ \hline
+1 & AR DKF  & 0.0170 (0.0029) & 3 of 4 \\
+  & FAR DKF & 0.0202 (0.0039) & 1 of 4 \\
+  & BAR DKF & 0.0243 (0.0079) & 0 of 4 \\ \hline
+2 & AR DKF  & 0.0209 (0.0064) & 3 of 4 \\
+  & FAR DKF & 0.0415 (0.0249) & 1 of 4 \\
+  & BAR DKF & 0.0357 (0.0150) & 0 of 4 \\ \hline
+3 & AR DKF  & 0.1440 (0.0158) & 0 of 4 \\
+  & FAR DKF & 0.1641 (0.0174) & 1 of 4 \\
+  & BAR DKF & 0.1375 (0.0188) & 3 of 4 \\ \hline
 \end{tabular}
 \caption{Lorenz experiments: prediction MSE over four training runs.
 The MSE of the noise is 0.0060.}
@@ -619,19 +619,28 @@ The MSE of the noise is 0.0060.}
 \end{table}
 
 \begin{itemize}
-    \item \textbf{Reconstruction.} In almost every run, all three models
-    reconstruct close to the noise level (mean reconstruction MSE between
-    0.0050 and 0.0071, except 0.0119 for the AR DKF on dataset 3, due to
-    one run at 0.0225). They reproduce the noisy input rather than
-    denoise it.
-    \item \textbf{Prediction.} The spread between runs of the \emph{same}
-    model is as large as the differences between models, and no model is
-    consistently best: the AR DKF has the lowest error in three runs out
-    of four on dataset 2, the FAR DKF the lowest mean error on dataset 3,
-    and on dataset 1 the three means differ by less than 0.008, while the
-    standard deviations range from 0.004 to 0.020. The BAR DKF has one poor run on dataset 2 (0.166), which
-    drives its mean and spread there. Dataset 3 remains the hardest for
-    all models.
+    \item \textbf{Reconstruction.} On dataset 1, the reconstruction MSE
+    is below the MSE of the noise in eleven runs out of twelve (means
+    0.0042, 0.0047 and 0.0041 for the AR DKF, the FAR DKF and the BAR
+    DKF): the models denoise. On dataset 2 it is close to the noise level,
+    between 0.0049 and 0.0070 in ten runs out of twelve (0.0104 and
+    0.0131 in the other two). On dataset 3 it is far above the noise
+    level in every run, between 0.039 and 0.112: the models do not even
+    reconstruct the test sequences well. Of the three datasets, this is
+    the one whose test trajectory differs most from the training
+    trajectory (Figure~\ref{fig:dataset_3_partial_data}).
+    \item \textbf{Prediction.} On datasets 1 and 2, the AR DKF has the
+    lowest mean error, and the lowest error in three runs out of four.
+    On dataset 1 its margin is of the same order as the spread between
+    runs of the same model (standard deviations from 0.003 to 0.008). On
+    dataset 2 the margin is larger, because the FAR DKF and the BAR DKF
+    each have two runs with an error above 0.044, but so is the spread.
+    On dataset 3 all three models forecast poorly, with mean errors
+    between 0.138 and 0.164; there the BAR DKF has the lowest error in
+    three runs out of four, by a small margin over the AR DKF. Four runs
+    are too few to rank the models with confidence; what they do show is
+    that the richer inference networks of the FAR DKF and the BAR DKF
+    bring no consistent improvement in forecasting.
 \end{itemize}
 
 \subsubsection*{Evaluation of the ELBO on test data}
@@ -647,8 +656,8 @@ To test this, the script \code{evaluate\_elbo.py} evaluates each trained
 model on the noisy test sequences (the same noise for all models) with
 two quantities, reported per time step:
 \begin{itemize}
-    \item the ELBO, estimated as in Section~\ref{sec:approximation_elbo}
-    (with $\beta = 1$) and averaged over 20 trajectories per sequence;
+    \item the ELBO, estimated as during training and averaged over 20
+    trajectories per sequence;
     \item the importance-weighted bound \cite{burda2016importance}
     \begin{equation*}
         \mathcal{L}_K = \E\left[\log \frac{1}{K} \sum_{k=1}^{K}
@@ -664,11 +673,7 @@ two quantities, reported per time step:
 \end{itemize}
 As a check of the implementation, $\mathcal{L}_1$ agrees with the ELBO
 within its confidence interval in every evaluation, and $\mathcal{L}_K$
-increases with $K$. The ELBO was evaluated after each of the last three
-runs of every dataset (and after the first run for dataset 3). Because
-$\beta$ decays during training (see \enquote{Configurations} above), the
-ELBO evaluated here is not the objective the models were trained on: in
-the training loss, the regularisation term had a much smaller weight.
+increases with $K$. The ELBO was evaluated after every training run.
 
 \begin{table}[ht!]
 \centering
@@ -678,43 +683,54 @@ the training loss, the regularisation term had a much smaller weight.
 Dataset & Model & ELBO: mean (std.\ dev.) &
 Gap $\mathcal{L}_{100} - \mathcal{L}$: mean [min, max] \\
 \hline
-1 & AR DKF  & $-13.8$ (7.5)  & 0.62 [0.58, 0.69] \\
-  & FAR DKF & $-23.3$ (8.6)  & 0.65 [0.60, 0.68] \\
-  & BAR DKF & $-17.2$ (13.1) & 0.63 [0.56, 0.73] \\ \hline
-2 & AR DKF  & $-30.8$ (0.8)  & 0.69 [0.66, 0.70] \\
-  & FAR DKF & $-22.9$ (4.7)  & 0.64 [0.62, 0.67] \\
-  & BAR DKF & $-25.4$ (12.5) & 0.63 [0.53, 0.69] \\ \hline
-3 & AR DKF  & $-41.3$ (8.5)  & 0.80 [0.72, 0.95] \\
-  & FAR DKF & $-38.8$ (7.8)  & 0.80 [0.72, 0.95] \\
-  & BAR DKF & $-37.5$ (7.4)  & 0.75 [0.73, 0.79] \\ \hline
+1 & AR DKF  & 2.14 (0.14)  & 0.25 [0.21, 0.34] \\
+  & FAR DKF & 2.04 (0.16)  & 0.22 [0.18, 0.28] \\
+  & BAR DKF & 2.12 (0.02)  & 0.19 [0.17, 0.20] \\ \hline
+2 & AR DKF  & 2.17 (0.21)  & 0.28 [0.21, 0.35] \\
+  & FAR DKF & 2.15 (0.17)  & 0.19 [0.15, 0.25] \\
+  & BAR DKF & 2.06 (0.27)  & 0.23 [0.18, 0.27] \\ \hline
+3 & AR DKF  & $-5.7$ (0.7)   & 0.72 [0.68, 0.76] \\
+  & FAR DKF & $-10.1$ (2.7)  & 0.77 [0.56, 0.94] \\
+  & BAR DKF & $-14.0$ (7.2)  & 0.98 [0.63, 1.42] \\ \hline
 \end{tabular}
 \caption{Lorenz experiments: ELBO and estimated ELBO gap on the test
-sequences (in nats per time step; higher ELBO is better). ELBO over
-three runs (four for dataset 3); gap over three runs.}
+sequences (in nats per time step; higher ELBO is better), over four
+training runs.}
 \label{tab:lorenz_elbo}
 \end{table}
 
 \begin{itemize}
-    \item \textbf{The ELBO varies more between runs than between
-    models.} Its standard deviation over runs of the same model is
-    between 4.7 and 13.1 nats per time step in eight cases out of nine
-    (0.8 for the AR DKF on dataset 2), while the differences between the means
-    of the three models are of the same size or smaller, and the model
-    with the best ELBO changes from one run to the next. The AR DKF has
-    the lowest mean ELBO on dataset 2 (the lowest in two runs out of
-    three), yet the lowest forecasting error there: the ELBO and the
-    forecasting error measure different things.
-    \item \textbf{The estimated gap is similar for the three models}, at
-    about 0.6--0.8 nats per time step. With $K = 100$, the
-    importance-weighted bound cannot detect the difference that the theory
-    predicts. The bound is still rising between $K = 10$ and $K = 100$
-    (by 0.2 to 0.4 nats per time step), so it has not converged and the
-    true gaps are larger than these estimates. Comparing them would
-    require much larger $K$ or a better proposal distribution.
+    \item \textbf{On datasets 1 and 2, the ELBO does not rank the
+    models.} The three mean ELBOs lie between 2.04 and 2.17 nats per
+    time step. They differ by at most 0.11, while the standard deviation
+    over runs of the same model is between 0.14 and 0.27 in five cases
+    out of six (0.02 for the BAR DKF on dataset 1), and the model with
+    the best ELBO changes from one run to the next.
+    \item \textbf{On dataset 3, the ELBO is much lower}, between $-4.6$
+    and $-20.6$ nats per time step over the twelve runs: models trained
+    on one part of the attractor explain these test sequences poorly,
+    as their reconstruction errors already showed. The AR DKF has the
+    highest ELBO in all four runs, so that its mean ELBO is the highest
+    of the three on every dataset.
+    \item \textbf{On datasets 1 and 2, the estimated gap of the AR DKF
+    is the largest on average}: 0.25 and 0.28 nats per time step,
+    against 0.19 to 0.23 for the FAR DKF and the BAR DKF. It is the
+    largest of the three in six runs out of eight (all four on
+    dataset 2). This is the direction that
+    Proposition~\ref{prop:ar_posterior} predicts. The evidence is weak,
+    however: the ranges over runs overlap, the differences (0.03 to
+    0.10) are of the same order as the spread between runs of one model,
+    and on dataset 3 the ordering is not the same. Moreover, the bound is
+    still rising between $K = 10$ and $K = 100$ (by 0.05 to 0.10 nats per
+    time step on datasets 1 and 2, and by 0.2 to 0.5 on dataset 3), so it
+    has not converged and the true gaps are larger than these estimates.
+    A reliable comparison would require much larger $K$ or a better
+    proposal distribution.
 \end{itemize}
 
-\noindent In short, the experiments do not show the advantage of the
-FAR DKF and the BAR DKF that the d-separation argument suggests. What
-they show clearly is that, at this scale, the variability between
-training runs is at least as large as the differences between the three
-inference networks.
+\noindent In short, the FAR DKF and the BAR DKF do not forecast
+consistently better than the AR DKF, which has the simplest inference
+network, and their ELBOs on test data are not higher. The estimated ELBO
+gaps go in the direction that the d-separation argument suggests on two
+datasets out of three, but not by a margin that these experiments can
+establish.

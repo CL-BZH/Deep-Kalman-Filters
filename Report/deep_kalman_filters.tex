@@ -563,9 +563,12 @@ Neither changes the minimiser. With $\beta = 1$ this is exactly the
 negative ELBO estimate \eqref{eq:elbo_estimator}, up to a constant and a
 positive factor. With $\beta \neq 1$ the objective is a weighted
 ($\beta$-VAE-style) variant. In the experiments of
-Appendix~\ref{sec:results}, $\beta$ starts at 1 and is multiplied by
-0.95 after every epoch, so the weight of the regularisation term
-decreases during training. The option \code{loss\_type='mse'} drops the
+Appendix~\ref{sec:results}, $\beta$ is raised linearly to 1 over the
+first 20 epochs and kept at 1 for the remaining 100, so that most of the
+training minimises $-\hat{\mathcal{L}}$ itself. This \emph{warm-up}
+is a common practice for VAEs. With $\beta = 1$ from the first epoch,
+the loss often stayed on a plateau for tens of epochs, and in some runs
+for the whole training. The option \code{loss\_type='mse'} drops the
 decoder variance, so its reconstruction term is no longer a
 log-likelihood and the objective is no longer an ELBO.
 \end{story}
@@ -639,9 +642,10 @@ it through the learned dynamics is the non-linear analogue of the Kalman
 prediction step. Two limitations follow. A forecast is a single sampled
 path, not the mean of the predictive distribution, so its error includes
 the sampling noise. And the model can only forecast well if the
-transition network has learned the dynamics. A very flexible inference
-network can explain the training data while the transition network
-stays poor (Appendix~\ref{sec:results}).
+transition network has learned the dynamics. A flexible inference
+network can reconstruct the observations well while the transition
+network captures the dynamics only approximately
+(Appendix~\ref{sec:results}).
 \end{inwords}
 
 %======================================================================
@@ -650,7 +654,8 @@ stays poor (Appendix~\ref{sec:results}).
 \subsection{Motivation}
 
 On the sine-wave data, the vanilla DKF reconstructs the observed part of
-a sequence well but fails to forecast it (Appendix~\ref{sec:results}).
+a sequence well, but its forecasts drift out of phase with the signal
+(Appendix~\ref{sec:results}).
 Its forecasts depend only on the transition model
 $p(\mathbf{z}_t \mid \mathbf{z}_{t-1})$, and nothing forces that model to
 carry the information needed for long-range prediction. To give the
@@ -851,11 +856,11 @@ BAR DKF & $q_\phi(\mathbf{z}_t \mid \mathbf{z}_{t-1}, \mathbf{x}_{1:T})$,
 one bidirectional RNN & Yes \\ \hline
 \end{tabular}
 \end{center}
-On the Lorenz data, over four training runs per experiment, the three
-variants reconstruct the observations equally well, and none of them
-forecasts consistently better than the others. Their ELBOs on test data
-vary more between runs of the same model than between models, and the
-estimated ELBO gaps are similar for the three variants
-(Appendix~\ref{sec:results}). The advantage that
-Proposition~\ref{prop:ar_posterior} suggests for the FAR DKF and the BAR
-DKF is therefore not visible in these experiments.
+On the Lorenz data, over four training runs per experiment, the FAR DKF
+and the BAR DKF do not forecast consistently better than the AR DKF, and
+their ELBOs on test data are not higher. On two datasets
+out of three, the estimated ELBO gap of the AR DKF is the largest on
+average, as Proposition~\ref{prop:ar_posterior} suggests, but the
+difference is of the same order as the variability between training runs
+(Appendix~\ref{sec:results}). These experiments therefore do not
+establish the advantage of the FAR DKF and the BAR DKF.
